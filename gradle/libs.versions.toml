@@ -6,11 +6,20 @@ junit = "4.13.2"
 kotlin = "2.3.20"
 kotlinx-coroutines = "1.10.2"
 material3 = "1.10.0-alpha05"
+material-icons="1.7.3"
+#implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
+
+filekit = "0.13.0"
+
+
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
+material-icons-core={module = "org.jetbrains.compose.material:material-icons-core", version.ref="material-icons"}
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
