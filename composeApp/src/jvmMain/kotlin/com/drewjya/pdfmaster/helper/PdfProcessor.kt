@@ -1,6 +1,7 @@
 package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
+import java.io.File
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -10,17 +11,10 @@ import org.apache.pdfbox.pdmodel.PDResources
 import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
-import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
 import org.apache.pdfbox.util.Matrix
-import java.awt.Font
-import java.awt.RenderingHints
-import java.awt.geom.AffineTransform
-import java.awt.image.BufferedImage
-import java.io.File
 import kotlin.math.cos
 import kotlin.math.sin
-import java.awt.Color as ColorX
 
 enum class ProcessType {
     Watermark,
@@ -51,6 +45,14 @@ data class NumberPosition(
     val y: Int = 0,
 )
 
+enum class DatePattern(
+    val pattern: String,
+) {
+    Date("dd-MM-yyyy"),
+    Long("dd MMMM yyyy"),
+    Iso("yyyy-MM-dd"),
+}
+
 data class PdfConfig(
     val type: ProcessType = ProcessType.All,
     val watermarkText: String = "",
@@ -66,6 +68,51 @@ data class PdfConfig(
 )
 
 object PdfProcessor {
+    fun batchMergePdfs(
+        sourceFiles: List<File>,
+        outputDirectoryPath: String,
+        pattern: DatePattern,
+        selectedDate: Long,
+    ) {
+        val date = formatDate(selectedDate, pattern)
+        val parentDir = File(outputDirectoryPath)
+        val outputDirectory = File(parentDir, date)
+        println("outputDirectory: ${outputDirectory.absolutePath}")
+        if (!outputDirectory.exists()) {
+            val created = outputDirectory.mkdirs()
+            if (created) {
+                println("Created new directory at: ${outputDirectory.absolutePath}")
+            } else {
+                println("Warning: Failed to create directory. Path might be invalid or lacking permissions.")
+            }
+        }
+        val groupedResults =
+            sourceFiles.groupBy { file ->
+                file.name
+                    .split(" - ")
+                    .first()
+                    .trim()
+            }
+
+        groupedResults.forEach { (name, files) ->
+            val sortedList =
+                files.sortedBy { file ->
+                    val fileName = file.name
+                    when {
+                        fileName.contains("Portofolio Activity", ignoreCase = true) -> 1
+                        fileName.contains("Statement Position", ignoreCase = true) -> 3
+                        else -> 2 // 'other' or any other file
+                    }
+                }
+
+            mergePdfs(
+                sourceFiles = sortedList,
+                outputDirectoryPath = outputDirectory.absolutePath,
+                outputFileName = "$name - Statement $date.pdf",
+            )
+        }
+    }
+
     fun mergePdfs(
         sourceFiles: List<File>,
         outputDirectoryPath: String,
@@ -319,53 +366,5 @@ object PdfProcessor {
         cs.setTextMatrix(matrix)
         cs.showText(config.watermarkText)
         cs.endText()
-    }
-
-    private fun stampAsImage(
-        doc: PDDocument,
-        page: PDPage,
-        font: PDFont,
-        config: PdfConfig,
-    ) {
-        val pageWidth = page.mediaBox.width.toInt()
-        val pageHeight = page.mediaBox.height.toInt()
-        val fontSize =
-            (if (config.type == ProcessType.Watermark) config.watermarkFontSize else config.numberingFontSize).toFloat()
-        // 1. Draw watermark text onto a transparent BufferedImage
-        val img = BufferedImage(pageWidth, pageHeight, BufferedImage.TYPE_INT_ARGB)
-        val color = config.color
-        val a = (config.opacity)
-        val colorx = ColorX(color.red, color.green, color.blue, a)
-        val g2d =
-            img.createGraphics().apply {
-                setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-                setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-
-                this.color = colorx
-
-                this.font = Font(font.name, Font.BOLD, fontSize.toInt())
-//            font = Font(config.font.pdfBoxName, java.awt.Font.BOLD, config.fontSize.toInt())
-            }
-
-        // Rotate around the page centre
-        val cx = pageWidth / 2.0
-        val cy = pageHeight / 2.0
-        val at = AffineTransform.getRotateInstance(Math.toRadians(config.rotation), cx, cy)
-        g2d.transform(at)
-
-        val fm = g2d.fontMetrics
-        val textW = fm.stringWidth(config.watermarkText)
-        val textH = fm.ascent
-        val hx = ((pageWidth - textW) / 2)
-        val yw = ((pageHeight + textH) / 2)
-        g2d.drawString(config.watermarkText, hx, yw)
-        g2d.dispose()
-
-        // 2. Embed image UNDER existing content (PREPEND mode)
-        val pdImage = LosslessFactory.createFromImage(doc, img)
-
-        PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, true).use { cs ->
-            cs.drawImage(pdImage, 0f, 0f, pageWidth.toFloat(), pageHeight.toFloat())
-        }
     }
 }

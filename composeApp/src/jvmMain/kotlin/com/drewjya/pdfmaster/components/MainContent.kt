@@ -10,18 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.drewjya.pdfmaster.Screen
-import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import io.github.vinceglb.filekit.dialogs.compose.PickerResultLauncher
 
-// private val Slate900 = Color(0xFF0F172A)
 
 @Composable
-fun MainContent(
-    screen: Screen,
-    pickerFiles: PickerResultLauncher,
-    pickerFile: PickerResultLauncher,
-    pickerDirectory: PickerResultLauncher,
-) {
+fun MainContent(screen: Screen) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     Box(
         modifier =
@@ -33,12 +25,10 @@ fun MainContent(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            HeaderContent(screen, pickerFiles, modifier = Modifier.padding(horizontal = 12.dp))
+            HeaderContent(screen, modifier = Modifier.padding(horizontal = 12.dp))
             ConfigurationContent(
                 screen = screen,
                 windowWidthSizeClass = windowSizeClass.windowWidthSizeClass,
-                pickerFile = pickerFile,
-                pickerDirectory = pickerDirectory,
             )
             FileList()
         }

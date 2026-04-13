@@ -23,9 +23,18 @@ import androidx.window.core.layout.WindowWidthSizeClass.Companion.MEDIUM
 import com.drewjya.pdfmaster.Screen
 import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.Slate100
+import com.drewjya.pdfmaster.helper.DatePattern
+import com.drewjya.pdfmaster.helper.PageFormat
+import com.drewjya.pdfmaster.helper.Position
+import com.drewjya.pdfmaster.helper.formatDate
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
-import io.github.vinceglb.filekit.dialogs.compose.PickerResultLauncher
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
@@ -33,10 +42,53 @@ import org.koin.compose.koinInject
 fun ConfigurationContent(
     screen: Screen,
     windowWidthSizeClass: WindowWidthSizeClass,
-    pickerFile: PickerResultLauncher,
-    pickerDirectory: PickerResultLauncher,
 ) {
     val pdfViewModel: PdfViewModel = koinInject()
+//    var inputDir by mutableStateOf("")
+
+    val pickerFile =
+        rememberFilePickerLauncher(
+            type = FileKitType.File(extensions = setOf("pdf")),
+            mode = FileKitMode.Single,
+            onResult = { file ->
+                if (file != null) {
+                    pdfViewModel.setName(file.file.name)
+                    pdfViewModel.setDirectory(file.file.parent)
+                }
+            },
+        )
+
+    val inputDirectory =
+        rememberDirectoryPickerLauncher(
+            onResult = { directory ->
+                if (directory != null) {
+                    println("Selected directory: ${directory.path}")
+                    pdfViewModel.inputDirectory.value = directory.path
+                    val pdfFiles =
+                        directory.file
+                            .listFiles { file ->
+                                file.isFile && file.extension.equals("pdf", ignoreCase = true)
+                            }.orEmpty()
+                            .toList()
+                    val files = pdfFiles.filter { it.name.contains("-") }
+                    pdfViewModel.addFiles(files)
+                }
+            },
+        )
+
+    val pickerDirectory =
+        rememberDirectoryPickerLauncher(
+            onResult = { directory ->
+                if (directory != null) {
+                    if (screen == Screen.Files) {
+                        pdfViewModel.monthlyDirectory.value = directory.path
+                    } else {
+                        pdfViewModel.setDirectory(directory.path)
+                    }
+                }
+            },
+        )
+
     val controller = rememberColorPickerController()
 
     LaunchedEffect(Unit) {
@@ -59,10 +111,27 @@ fun ConfigurationContent(
     ) {
         when (windowWidthSizeClass) {
             COMPACT, MEDIUM -> {
+                if (screen == Screen.Files) {
+                    InputButton(
+                        label = "INPUT",
+                        text = pdfViewModel.inputDirectory.value,
+                        onValueChange = {
+                            pdfViewModel.inputDirectory.value = it
+                        },
+                        onClick = { inputDirectory.launch() },
+                        icon = AppIcon.Folder,
+                    )
+                }
                 InputButton(
                     label = "OUTPUT",
-                    text = pdfViewModel.selectedDirectory.value,
-                    onValueChange = { pdfViewModel.setDirectory(it) },
+                    text = (if (screen == Screen.Files) pdfViewModel.monthlyDirectory else pdfViewModel.selectedDirectory).value,
+                    onValueChange = {
+                        if (screen == Screen.Files) {
+                            pdfViewModel.monthlyDirectory.value = it
+                        } else {
+                            pdfViewModel.setDirectory(it)
+                        }
+                    },
                     onClick = { pickerDirectory.launch() },
                     icon = AppIcon.Folder,
                 )
@@ -86,17 +155,34 @@ fun ConfigurationContent(
                     )
                 }
 
-                if (screen != Screen.Merge) {
-                    FontSelector()
+                if (screen in listOf(Screen.Numbering, Screen.Watermark)) {
+                    DropdownSelector(
+                        selectedItem = pdfViewModel.font.value,
+                        label = "FONT",
+                        items = Standard14Fonts.FontName.entries,
+                        getLabel = { it.name },
+                        onItemSelected = { pdfViewModel.font.value = it },
+                    )
 
                     TextInput(
                         label = "SIZE",
-                        text = pdfViewModel.watermarkFontSize.value.toString(),
+                        text =
+                            (
+                                if (screen ==
+                                    Screen.Watermark
+                                ) {
+                                    pdfViewModel.watermarkFontSize.value
+                                } else {
+                                    pdfViewModel.numberingFontSize.value
+                                }
+                            ).toString(),
                         onValueChange = { text ->
+                            val state =
+                                (if (screen == Screen.Watermark) pdfViewModel.watermarkFontSize else pdfViewModel.numberingFontSize)
                             if (text.isBlank()) {
-                                pdfViewModel.watermarkFontSize.value = 0
+                                state.value = 0
                             } else {
-                                text.toIntOrNull()?.let { pdfViewModel.watermarkFontSize.value = it }
+                                text.toIntOrNull()?.let { state.value = it }
                             }
                         },
                         placeholder = "Add font size",
@@ -115,11 +201,23 @@ fun ConfigurationContent(
                             },
                             placeholder = "Input rotation",
                         )
-                        DropdownSelector("POSITION")
+                        DropdownSelector(
+                            "POSITION",
+                            items = Position.entries,
+                            selectedItem = pdfViewModel.position.value,
+                            onItemSelected = { pdfViewModel.position.value = it },
+                            getLabel = { it.name },
+                        )
                     }
 
                     if (screen == Screen.Numbering) {
-                        DropdownSelector("NUMBERING FORMAT")
+                        DropdownSelector(
+                            "NUMBERING FORMAT",
+                            items = PageFormat.entries,
+                            selectedItem = pdfViewModel.pageFormat.value,
+                            onItemSelected = { pdfViewModel.pageFormat.value = it },
+                            getLabel = { it.name + " (${it.value})".replace("{page}", "1").replace("{total}", "10") },
+                        )
                         MarginPdf(
                             x = pdfViewModel.x.value,
                             y = pdfViewModel.y.value,
@@ -128,9 +226,9 @@ fun ConfigurationContent(
                         )
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ColorPicker(controller)
-                        if (screen == Screen.Watermark) {
+                    if (screen == Screen.Watermark) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ColorPicker(controller)
                             AppSlider(
                                 value = pdfViewModel.opacity.value,
                                 onValueChange = { pdfViewModel.opacity.value = it },
@@ -139,6 +237,20 @@ fun ConfigurationContent(
                         }
                     }
                 }
+
+                DropdownSelector(
+                    "FORMATTER",
+                    selectedItem = pdfViewModel.dateFormat.value,
+                    onItemSelected = {
+                        pdfViewModel.dateFormat.value = it
+                    },
+                    items = DatePattern.entries,
+                    getLabel = { value ->
+
+                        value.pattern + " - " + formatDate(pdfViewModel.selectedDate.value, value)
+                    },
+                )
+                DateSelector(label = "DATE")
             }
 
             EXPANDED -> {
@@ -146,11 +258,29 @@ fun ConfigurationContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    if (screen == Screen.Files) {
+                        InputButton(
+                            modifier = Modifier.weight(1f),
+                            label = "INPUT",
+                            text = pdfViewModel.inputDirectory.value,
+                            onValueChange = {
+                                pdfViewModel.inputDirectory.value = it
+                            },
+                            onClick = { inputDirectory.launch() },
+                            icon = AppIcon.Folder,
+                        )
+                    }
                     InputButton(
                         modifier = Modifier.weight(1f),
                         label = "OUTPUT",
-                        text = pdfViewModel.selectedDirectory.value,
-                        onValueChange = { pdfViewModel.setDirectory(it) },
+                        text = (if (screen == Screen.Files) pdfViewModel.monthlyDirectory else pdfViewModel.selectedDirectory).value,
+                        onValueChange = {
+                            if (screen == Screen.Files) {
+                                pdfViewModel.monthlyDirectory.value = it
+                            } else {
+                                pdfViewModel.setDirectory(it)
+                            }
+                        },
                         onClick = { pickerDirectory.launch() },
                         icon = AppIcon.Folder,
                     )
@@ -177,22 +307,49 @@ fun ConfigurationContent(
                     }
 
                     if (screen == Screen.Numbering) {
-                        DropdownSelector("NUMBERING FORMAT", modifier = Modifier.weight(1f))
+                        DropdownSelector(
+                            "NUMBERING FORMAT",
+                            modifier = Modifier.weight(1f),
+                            items = PageFormat.entries,
+                            selectedItem = pdfViewModel.pageFormat.value,
+                            onItemSelected = { pdfViewModel.pageFormat.value = it },
+                            getLabel = { it.name + " (${it.value})".replace("{page}", "1").replace("{total}", "10") },
+                        )
                     }
                 }
 
-                if (screen != Screen.Merge) {
+                if (screen in listOf(Screen.Numbering, Screen.Watermark)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FontSelector(modifier = Modifier.weight(1f))
+                        val pdfViewModel: PdfViewModel = koinInject()
+
+                        DropdownSelector(
+                            modifier = Modifier.weight(1f),
+                            selectedItem = pdfViewModel.font.value,
+                            label = "FONT",
+                            items = Standard14Fonts.FontName.entries,
+                            getLabel = { it.name },
+                            onItemSelected = { pdfViewModel.font.value = it },
+                        )
                         TextInput(
                             modifier = Modifier.weight(1f),
                             label = "SIZE",
-                            text = pdfViewModel.watermarkFontSize.value.toString(),
+                            text =
+                                (
+                                    if (screen ==
+                                        Screen.Watermark
+                                    ) {
+                                        pdfViewModel.watermarkFontSize.value
+                                    } else {
+                                        pdfViewModel.numberingFontSize.value
+                                    }
+                                ).toString(),
                             onValueChange = { text ->
+                                val state =
+                                    (if (screen == Screen.Watermark) pdfViewModel.watermarkFontSize else pdfViewModel.numberingFontSize)
                                 if (text.isBlank()) {
-                                    pdfViewModel.watermarkFontSize.value = 0
+                                    state.value = 0
                                 } else {
-                                    text.toIntOrNull()?.let { pdfViewModel.watermarkFontSize.value = it }
+                                    text.toIntOrNull()?.let { state.value = it }
                                 }
                             },
                             placeholder = "Add font size",
@@ -214,7 +371,14 @@ fun ConfigurationContent(
                                 },
                                 placeholder = "Input rotation",
                             )
-                            DropdownSelector("POSITION", modifier = Modifier.weight(1f))
+                            DropdownSelector(
+                                modifier = Modifier.weight(1f),
+                                label = "POSITION",
+                                items = Position.entries,
+                                selectedItem = pdfViewModel.position.value,
+                                onItemSelected = { pdfViewModel.position.value = it },
+                                getLabel = { it.name },
+                            )
                         }
                     }
 
@@ -227,9 +391,9 @@ fun ConfigurationContent(
                         )
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ColorPicker(controller, modifier = Modifier.weight(1f))
-                        if (screen == Screen.Watermark) {
+                    if (screen == Screen.Watermark) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ColorPicker(controller, modifier = Modifier.weight(1f))
                             AppSlider(
                                 modifier = Modifier.weight(1f),
                                 value = pdfViewModel.opacity.value,
@@ -237,6 +401,25 @@ fun ConfigurationContent(
                                 label = "OPACITY",
                             )
                         }
+                    }
+                }
+
+                if (screen == Screen.Files) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DropdownSelector(
+                            "FORMATTER",
+                            modifier = Modifier.weight(1f),
+                            selectedItem = pdfViewModel.dateFormat.value,
+                            onItemSelected = {
+                                pdfViewModel.dateFormat.value = it
+                            },
+                            items = DatePattern.entries,
+                            getLabel = { value ->
+
+                                value.pattern + " - " + formatDate(pdfViewModel.selectedDate.value, value)
+                            },
+                        )
+                        DateSelector(label = "DATE", modifier = Modifier.weight(1f))
                     }
                 }
             }

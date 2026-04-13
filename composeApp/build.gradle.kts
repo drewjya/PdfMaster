@@ -11,6 +11,7 @@ val koinVersion = "3.5.6"
 val koinComposeVersion = "1.1.5"
 
 kotlin {
+    jvmToolchain(21)
     jvm()
 
     sourceSets {
@@ -29,8 +30,8 @@ kotlin {
             implementation("org.jetbrains.compose.material3.adaptive:adaptive:1.0.0")
             implementation("com.github.skydoves:colorpicker-compose:1.1.3")
             implementation("io.insert-koin:koin-core:$koinVersion")
-// Koin Compose (Gives you the koinInject() function for Jetpack Compose)
             implementation("io.insert-koin:koin-compose:$koinComposeVersion")
+            implementation("com.cheonjaeung.compose.grid:grid:2.7.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -46,14 +47,16 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "com.drewjya.pdfmaster.MainKt"
-
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
         nativeDistributions {
             // Added Msi and Exe for Windows
             targetFormats(
                 TargetFormat.Dmg,
                 TargetFormat.Pkg,
                 TargetFormat.Msi,
-                TargetFormat.Exe
+                TargetFormat.Exe,
             )
 
             packageName = "PdfMaster"
@@ -66,11 +69,11 @@ compose.desktop {
             // New block for Windows-specific installer settings
             windows {
                 menuGroup = "PdfMaster" // Creates a folder in the Start Menu
-                dirChooser = true       // Lets the user pick where to install it
+                dirChooser = true // Lets the user pick where to install it
                 perUserInstall = true
                 upgradeUuid = "100041b7-4242-4f62-bb44-395e4bc34e27"
 
-                shortcut = true         // Creates a Desktop shortcut
+                shortcut = true // Creates a Desktop shortcut
             }
         }
     }

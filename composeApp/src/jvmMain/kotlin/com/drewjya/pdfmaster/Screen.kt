@@ -23,4 +23,9 @@ enum class Screen(
         description = "Add page numbers to multiple PDF files.",
         icon = AppIcon.Number,
     ),
+    Files(
+        title = "Files",
+        description = "Manage your PDF files.",
+        icon = AppIcon.File,
+    ),
 }

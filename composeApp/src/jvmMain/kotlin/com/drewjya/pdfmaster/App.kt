@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,19 +25,14 @@ import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.components.MainContent
 import com.drewjya.pdfmaster.components.Sidebar
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import io.github.vinceglb.filekit.dialogs.compose.PickerResultLauncher
-import org.koin.compose.koinInject
 import java.awt.datatransfer.DataFlavor
 import java.io.File
+import org.koin.compose.koinInject
 
 private val Slate50 = Color(0xFFF8FAFC)
 
 @Composable
-fun App(
-    pickerFiles: PickerResultLauncher,
-    pickerFile: PickerResultLauncher,
-    pickerDirectory: PickerResultLauncher,
-) {
+fun App() {
     val viewModel: PdfViewModel = koinInject()
 
     var currentScreen by remember { mutableStateOf(Screen.Merge) }
@@ -59,7 +53,8 @@ fun App(
                     @OptIn(ExperimentalComposeUiApi::class)
                     val transferable = event.awtTransferable
                     if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                        val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
+                        val data = transferable.getTransferData(DataFlavor.javaFileListFlavor)
+                        val files = (data as? List<*>)?.filterIsInstance<File>() ?: emptyList()
                         viewModel.addFiles(files.filter { it.extension == "pdf" })
                         return true
                     }
@@ -91,12 +86,7 @@ fun App(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    MainContent(
-                        screen = currentScreen,
-                        pickerFiles = pickerFiles,
-                        pickerFile = pickerFile,
-                        pickerDirectory = pickerDirectory,
-                    )
+                    MainContent(currentScreen)
                 }
             }
 
