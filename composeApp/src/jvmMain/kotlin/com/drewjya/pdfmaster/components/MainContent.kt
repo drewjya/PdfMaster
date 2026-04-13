@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.drewjya.pdfmaster.Screen
 
-
 @Composable
 fun MainContent(screen: Screen) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass

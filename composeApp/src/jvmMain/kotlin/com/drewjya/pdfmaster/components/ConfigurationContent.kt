@@ -238,19 +238,21 @@ fun ConfigurationContent(
                     }
                 }
 
-                DropdownSelector(
-                    "FORMATTER",
-                    selectedItem = pdfViewModel.dateFormat.value,
-                    onItemSelected = {
-                        pdfViewModel.dateFormat.value = it
-                    },
-                    items = DatePattern.entries,
-                    getLabel = { value ->
+                if (screen == Screen.Files) {
+                    DropdownSelector(
+                        "FORMATTER",
+                        selectedItem = pdfViewModel.dateFormat.value,
+                        onItemSelected = {
+                            pdfViewModel.dateFormat.value = it
+                        },
+                        items = DatePattern.entries,
+                        getLabel = { value ->
 
-                        value.pattern + " - " + formatDate(pdfViewModel.selectedDate.value, value)
-                    },
-                )
-                DateSelector(label = "DATE")
+                            value.pattern + " - " + formatDate(pdfViewModel.selectedDate.value, value)
+                        },
+                    )
+                    DateSelector(label = "DATE")
+                }
             }
 
             EXPANDED -> {

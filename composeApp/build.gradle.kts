@@ -64,10 +64,12 @@ compose.desktop {
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"
+                iconFile.set(project.file("icons/icon.icns"))
             }
 
             // New block for Windows-specific installer settings
             windows {
+                iconFile.set(project.file("icons/icon.ico"))
                 menuGroup = "PdfMaster" // Creates a folder in the Start Menu
                 dirChooser = true // Lets the user pick where to install it
                 perUserInstall = true
