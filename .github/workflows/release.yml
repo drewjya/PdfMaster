@@ -1,0 +1,100 @@
+name: Build and Release Desktop Apps
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers workflow on tags starting with 'v' (e.g., v1.0.0, v2.1)
+
+permissions:
+  contents: write # Required for the action to create a GitHub Release
+
+jobs:
+  build-macos:
+    name: Build macOS App
+    runs-on: macos-latest # Note: This builds an ARM64 (Apple Silicon) app by default. Use macos-13 for Intel.
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto' # You can change this to 'temurin', 'zulu', etc.
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build macOS DMG
+        # Note: If your desktop app is in a sub-module (like 'composeApp'),
+        # change this to: ./gradlew :composeApp:packageReleaseDmg
+        run: ./gradlew packageReleaseDmg
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifact
+          # Grabs the generated DMG from the standard Compose Desktop output path
+          path: '**/build/compose/binaries/main/release/*.dmg'
+          retention-days: 1
+
+  build-windows:
+    name: Build Windows App
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Windows Installer
+        # Note: Depending on your build.gradle.kts config, you might want to use
+        # packageReleaseExe instead of packageReleaseMsi
+        run: ./gradlew packageReleaseMsi
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifact
+          # Grabs the generated MSI (or EXE) from the output path
+          path: |
+            **/build/compose/binaries/main/release/*.msi
+            **/build/compose/binaries/main/release/*.exe
+          retention-days: 1
+
+  create-release:
+    name: Create GitHub Release
+    needs: [ build-macos, build-windows ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifact
+          path: release-artifacts
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifact
+          path: release-artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
