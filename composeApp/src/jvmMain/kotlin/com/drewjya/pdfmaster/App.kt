@@ -27,8 +27,9 @@ import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.components.AppSnackbar
 import com.drewjya.pdfmaster.components.MainContent
 import com.drewjya.pdfmaster.components.Sidebar
+import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import com.pavi2410.appupdater.AppUpdater
+
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import kotlinx.coroutines.CoroutineScope

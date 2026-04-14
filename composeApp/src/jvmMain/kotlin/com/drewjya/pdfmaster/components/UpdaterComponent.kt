@@ -26,14 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.drewjya.pdfmaster.design.AppColor
 import com.drewjya.pdfmaster.design.AppIcon
-import com.pavi2410.appupdater.AppUpdater
-import com.pavi2410.appupdater.UpdateState
-import com.pavi2410.appupdater.ui.DownloadProgressIndicator
+import com.drewjya.pdfmaster.updater.AppUpdater
+import com.drewjya.pdfmaster.updater.UpdateState
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun AppUpdater() {
+fun UpdaterComponent() {
 
     val updater: AppUpdater = koinInject()
 
@@ -167,3 +166,49 @@ private fun formatSize(bytes: Long): String {
     }
 }
 
+
+/**
+ * A progress indicator that shows download progress with percentage and byte counts.
+ */
+@Composable
+fun DownloadProgressIndicator(
+    progress: Float,
+    bytesDownloaded: Long,
+    totalBytes: Long,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        LinearProgressIndicator(
+            progress = { progress.coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "${(progress * 100).toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (totalBytes > 0) {
+                Text(
+                    text = "${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String {
+    return when {
+        bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+        bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+        else -> "$bytes B"
+    }
+}

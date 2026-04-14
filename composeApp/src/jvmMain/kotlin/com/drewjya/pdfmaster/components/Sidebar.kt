@@ -131,7 +131,7 @@ fun Sidebar(
                             )
                         }
                     }
-                    AppUpdater()
+                    UpdaterComponent()
                 }
             }
 

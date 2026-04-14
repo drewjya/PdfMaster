@@ -9,10 +9,7 @@ import java.nio.file.Paths
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
-import org.apache.pdfbox.pdmodel.PDResources
-import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
@@ -157,17 +154,25 @@ object PdfProcessor {
 
         sourceFiles.forEach { file -> merger.addSource(file) }
 
+        // Use a document to manage merging to ensure resources are handled correctly in PDFBox 3
         try {
-            merger.mergeDocuments(null)
-
-            return SnackbarMessage(
-                MessageType.Success,
-                "Merge Success",
-                "Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}"
-            )
+            PDDocument().use { destinationDoc ->
+                sourceFiles.forEach { file ->
+                    Loader.loadPDF(file).use { sourceDoc ->
+                        merger.appendDocument(destinationDoc, sourceDoc)
+                    }
+                }
+                destinationDoc.save(destinationFile)
+            }
         } catch (e: Exception) {
             return SnackbarMessage(MessageType.Error, "Failed to merge PDFs", "Failed to merge PDFs: ${e.message}")
         }
+
+        return SnackbarMessage(
+            MessageType.Success,
+            "Merge Success",
+            "Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}"
+        )
     }
 
     fun batchProcess(
@@ -211,57 +216,70 @@ object PdfProcessor {
         config: PdfConfig,
     ) {
         Loader.loadPDF(inputFile).use { document ->
-
             val fontType = PDType1Font(config.font)
             val targetPages = resolveTargetPages(document)
-
-            val numberingFontSize = config.numberingFontSize.toFloat()
-
             val totalPages = document.numberOfPages
 
             for (index in targetPages) {
                 val page = document.getPage(index)
-                val resources = page.resources ?: PDResources().also { page.resources = it }
-                resources.add(fontType)
-                resources.add(fontType)
-                val width = page.mediaBox.width
-                val height = page.mediaBox.height
-                val watermarkText = config.watermarkText
 
+                // 1. Open ONE stream for all operations on this page
+                // AppendMode.APPEND = Keep original content
+                // compress = true
+                // resetContext = true (This is CRITICAL to prevent state bleeding)
                 PDPageContentStream(
                     document,
                     page,
                     PDPageContentStream.AppendMode.APPEND,
                     true,
-                    false,
+                    false
                 ).use { contentStream ->
-                    if (config.type != ProcessType.Numbering && watermarkText.isNotBlank()) {
-                        stampPage(document, page, fontType, config)
-//                        stampAsImage(document, page, fontType, config)
-                    }
 
-                    if (config.type != ProcessType.Watermark) {
-                        contentStream.saveGraphicsState()
-                        contentStream.setFont(fontType, numberingFontSize)
-                        contentStream.setNonStrokingColor(
-                            config.color.red,
-                            config.color.green,
-                            config.color.blue,
+                    // --- WATERMARK SECTION ---
+                    if (config.type != ProcessType.Numbering && config.watermarkText.isNotBlank()) {
+                        contentStream.saveGraphicsState() // Isolate watermark state
+
+                        val gs = PDExtendedGraphicsState().apply {
+                            nonStrokingAlphaConstant = config.opacity
+                            strokingAlphaConstant = config.opacity
+                        }
+                        contentStream.setGraphicsStateParameters(gs)
+                        contentStream.setNonStrokingColor(config.color.red, config.color.green, config.color.blue)
+                        contentStream.setFont(fontType, config.watermarkFontSize.toFloat())
+
+                        val textWidth = fontType.getStringWidth(config.watermarkText) / 1000f * config.watermarkFontSize
+                        val (anchorX, anchorY) = computeAnchor(
+                            page.mediaBox.width,
+                            page.mediaBox.height,
+                            textWidth,
+                            config
                         )
 
-                        val pageText =
-                            config.pageFormat.value
-                                .replace("{page}", "${index + 1}")
-                                .replace("{total}", "$totalPages")
+                        // Call a modified stampSingle that takes the existing stream
+                        applyStampToStream(contentStream, anchorX, anchorY, config)
+
+                        contentStream.restoreGraphicsState() // Restore to clean state
+                    }
+
+                    // --- NUMBERING SECTION ---
+                    if (config.type != ProcessType.Watermark) {
+                        contentStream.saveGraphicsState() // Isolate numbering state
+
+                        val numberingFontSize = config.numberingFontSize.toFloat()
+                        contentStream.setFont(fontType, numberingFontSize)
+                        contentStream.setNonStrokingColor(config.color.red, config.color.green, config.color.blue)
+
+                        val pageText = config.pageFormat.value
+                            .replace("{page}", "${index + 1}")
+                            .replace("{total}", "$totalPages")
 
                         val textWidth = fontType.getStringWidth(pageText) / 1000f * numberingFontSize
                         val textHeight = fontType.fontDescriptor.capHeight / 1000f * numberingFontSize
 
-                        val marginX = width * (config.numberPosition.x / 100f)
-                        val marginY = height * (config.numberPosition.y / 100f)
-
-                        val x = width - marginX - textWidth
-                        val y = height - marginY - textHeight
+                        val x =
+                            page.mediaBox.width - (page.mediaBox.width * (config.numberPosition.x / 100f)) - textWidth
+                        val y =
+                            page.mediaBox.height - (page.mediaBox.height * (config.numberPosition.y / 100f)) - textHeight
 
                         contentStream.beginText()
                         contentStream.setTextMatrix(Matrix.getTranslateInstance(x, y))
@@ -272,7 +290,6 @@ object PdfProcessor {
                     }
                 }
             }
-
             document.save(outputFile)
         }
     }
@@ -281,45 +298,6 @@ object PdfProcessor {
     private fun resolveTargetPages(doc: PDDocument): List<Int> {
         val totalPages = doc.numberOfPages
         return (0 until totalPages).toList()
-    }
-
-    /**
-     * Stamps a single [page] with the configured watermark text.
-     * Uses APPEND mode so existing content is preserved.
-     */
-    private fun stampPage(
-        doc: PDDocument,
-        page: PDPage,
-        font: PDFont,
-        config: PdfConfig,
-    ) {
-        val mediaBox = page.mediaBox
-        val pageWidth = mediaBox.width
-        val pageHeight = mediaBox.height
-
-        val text = if (config.type == ProcessType.Watermark) config.watermarkText else config.pageFormat.value
-        val fontSize =
-            (if (config.type == ProcessType.Watermark) config.watermarkFontSize else config.numberingFontSize).toFloat()
-
-        val textWidth = font.getStringWidth(text) / 1000f * config.watermarkFontSize
-
-        PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
-
-            val gs =
-                PDExtendedGraphicsState().apply {
-                    nonStrokingAlphaConstant = config.opacity
-                    strokingAlphaConstant = config.opacity
-                }
-            cs.setGraphicsStateParameters(gs)
-
-            val color = config.color
-            cs.setNonStrokingColor(color.red, color.green, color.blue)
-
-            cs.setFont(font, fontSize)
-
-            val (anchorX, anchorY) = computeAnchor(pageWidth, pageHeight, textWidth, config)
-            stampSingle(cs, anchorX, anchorY, config)
-        }
     }
 
     private fun computeAnchor(
@@ -389,6 +367,23 @@ object PdfProcessor {
                 anchorY,
             )
 
+        cs.setTextMatrix(matrix)
+        cs.showText(config.watermarkText)
+        cs.endText()
+    }
+
+    private fun applyStampToStream(
+        cs: PDPageContentStream,
+        anchorX: Float,
+        anchorY: Float,
+        config: PdfConfig,
+    ) {
+        val theta = Math.toRadians(config.rotation)
+        val cosT = cos(theta).toFloat()
+        val sinT = sin(theta).toFloat()
+
+        cs.beginText()
+        val matrix = Matrix(cosT, sinT, -sinT, cosT, anchorX, anchorY)
         cs.setTextMatrix(matrix)
         cs.showText(config.watermarkText)
         cs.endText()
