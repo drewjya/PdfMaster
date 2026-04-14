@@ -3,15 +3,15 @@ name: Build and Release Desktop Apps
 on:
   push:
     tags:
-      - 'v*' # Triggers workflow on tags starting with 'v' (e.g., v1.0.0, v2.1)
+      - 'v*' # Triggers workflow on tags starting with 'v'
 
 permissions:
-  contents: write # Required for the action to create a GitHub Release
+  contents: write
 
 jobs:
   build-macos:
     name: Build macOS App
-    runs-on: macos-latest # Note: This builds an ARM64 (Apple Silicon) app by default. Use macos-13 for Intel.
+    runs-on: macos-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -20,22 +20,20 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'corretto' # You can change this to 'temurin', 'zulu', etc.
+          distribution: 'corretto'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build macOS DMG
-        # Note: If your desktop app is in a sub-module (like 'composeApp'),
-        # change this to: ./gradlew :composeApp:packageReleaseDmg
         run: ./gradlew packageReleaseDmg
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifact
-          # Grabs the generated DMG from the standard Compose Desktop output path
-          path: '**/build/compose/binaries/main/release/*.dmg'
+          # Updated to match your exact macOS directory
+          path: '**/build/compose/binaries/main-release/dmg/*.dmg'
           retention-days: 1
 
   build-windows:
@@ -55,18 +53,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build Windows Installer
-        # Note: Depending on your build.gradle.kts config, you might want to use
-        # packageReleaseExe instead of packageReleaseMsi
         run: ./gradlew packageReleaseMsi
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifact
-          # Grabs the generated MSI (or EXE) from the output path
-          path: |
-            **/build/compose/binaries/main/release/*.msi
-            **/build/compose/binaries/main/release/*.exe
+          # Updated to match your exact Windows directory
+          path: '**/build/compose/binaries/main-release/msi/*.msi'
           retention-days: 1
 
   create-release:
