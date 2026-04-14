@@ -16,27 +16,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21 (For Build Tools)
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'corretto'
+          distribution: 'jetbrains'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-
-      - name: Download and Extract JetBrains Runtime (macOS)
-        run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "arm64" ]; then
-            JBR_URL="https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.2-osx-aarch64-b375.1.tar.gz"
-          else
-            JBR_URL="https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.2-osx-x64-b375.1.tar.gz"
-          fi
-          curl -L -o jbr.tar.gz "$JBR_URL"
-          mkdir jbr
-          tar -xzf jbr.tar.gz -C jbr --strip-components=1
-          echo "JBR_HOME=$PWD/jbr/Contents/Home" >> $GITHUB_ENV
 
       - name: Build macOS DMG
         run: ./gradlew packageReleaseDmg
@@ -45,6 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifact
+          # Updated to match your exact macOS directory
           path: '**/build/compose/binaries/main-release/dmg/*.dmg'
           retention-days: 1
 
@@ -55,24 +43,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21 (For Build Tools)
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'corretto'
+          distribution: 'jetbrains'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-
-      - name: Download and Extract JetBrains Runtime (Windows)
-        shell: pwsh
-        run: |
-          $JBR_URL="https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.2-windows-x64-b375.1.tar.gz"
-          Invoke-WebRequest -Uri $JBR_URL -OutFile jbr.tar.gz
-          mkdir jbr
-          tar -xzf jbr.tar.gz -C jbr --strip-components=1
-          $jbrHome = (Resolve-Path "jbr").Path
-          Add-Content -Path $env:GITHUB_ENV -Value "JBR_HOME=$jbrHome"
 
       - name: Build Windows Installer
         run: ./gradlew packageReleaseMsi
@@ -81,6 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifact
+          # Updated to match your exact Windows directory
           path: '**/build/compose/binaries/main-release/msi/*.msi'
           retention-days: 1
 

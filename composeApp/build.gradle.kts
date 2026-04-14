@@ -55,8 +55,6 @@ kotlin {
             // Add Bouncy Castle for OpenPDF cryptography/encryption support
             implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
             implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
-
-            // JetBrains Jewel
             implementation("org.jetbrains.jewel:jewel-decorated-window:0.34.0-253.32098.37")
             implementation("org.jetbrains.jewel:jewel-int-ui-standalone:0.34.0-253.32098.37")
             implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:0.34.0-253.32098.37")
@@ -84,16 +82,6 @@ compose.desktop {
 
         nativeDistributions {
             modules("jdk.unsupported")
-
-            // --- ADDED JBR INTEGRATION HERE ---
-            // If the CI environment provides a path to the JetBrains Runtime,
-            // tell the packager to bundle it instead of the default JDK.
-            val jbrHome = System.getenv("JBR_HOME")
-            if (jbrHome != null) {
-                javaHome = jbrHome
-            }
-            // ----------------------------------
-
 //            modules("jdk.incubator.vector", "java.logging", "jdk.unsupported")
 //
 //            jvmArgs(
