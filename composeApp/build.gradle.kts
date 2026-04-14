@@ -31,7 +31,6 @@ kotlin {
             implementation("com.github.skydoves:colorpicker-compose:1.1.3")
             implementation("io.insert-koin:koin-core:$koinVersion")
             implementation("io.insert-koin:koin-compose:$koinComposeVersion")
-            implementation("com.cheonjaeung.compose.grid:grid:2.7.1")
             implementation("com.pavi2410.kmp-app-updater:core:0.1.0")
             implementation("com.pavi2410.kmp-app-updater:compose-ui:0.1.0")
         }
