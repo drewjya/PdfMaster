@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.helper.DatePattern
 import com.drewjya.pdfmaster.helper.PageFormat
 import com.drewjya.pdfmaster.helper.Position
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import java.util.prefs.Preferences
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import kotlin.time.Clock
 
 class AppPreferences {
@@ -40,7 +40,7 @@ class AppPreferences {
         set(value) = prefs.putLong("color", value)
 
     var opacity: Float
-        get() = prefs.getFloat("opacity", 0f)
+        get() = prefs.getFloat("opacity", 0.3f)
         set(value) = prefs.putFloat("opacity", value)
 
     var rotation: Double

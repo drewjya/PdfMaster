@@ -1,15 +1,26 @@
 package com.drewjya.pdfmaster.components
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -18,15 +29,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drewjya.pdfmaster.Screen
+import org.jetbrains.compose.resources.painterResource
+import pdfmaster.composeapp.generated.resources.Res
+import pdfmaster.composeapp.generated.resources.icon
 
 // Tailwind Colors from React snippet
-private val Slate50 = Color(0xFFF8FAFC)
 private val Slate100 = Color(0xFFF1F5F9)
 private val Slate200 = Color(0xFFE2E8F0)
-private val Slate400 = Color(0xFF94A3B8)
 private val Slate500 = Color(0xFF64748B)
 private val Slate900 = Color(0xFF0F172A)
-private val Indigo600 = Color(0xFF4F46E5)
 
 @Composable
 fun Sidebar(
@@ -71,18 +82,14 @@ fun Sidebar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(32.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Indigo600),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("P", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
+                            Image(
+                                painter = painterResource(Res.drawable.icon),
+                                contentDescription = "Descriptive text",
+                                modifier = Modifier.size(42.dp)
+                            )
+
                             Text(
-                                text = "PdfStudio",
+                                text = "PDF Master",
                                 color = Slate900,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
@@ -111,7 +118,8 @@ fun Sidebar(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(top = 10.dp, start = 12.dp, end = 12.dp),
+                            .padding(vertical = 6.dp, horizontal = 12.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Screen.entries.forEach { screen ->
@@ -123,8 +131,11 @@ fun Sidebar(
                             )
                         }
                     }
+                    AppUpdater()
                 }
             }
+
+
         }
     }
 }

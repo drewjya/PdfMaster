@@ -1,6 +1,11 @@
 package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
+import com.drewjya.pdfmaster.components.MessageType
+import com.drewjya.pdfmaster.components.SnackbarMessage
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -12,7 +17,6 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
 import org.apache.pdfbox.util.Matrix
-import java.io.File
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -63,29 +67,39 @@ data class PdfConfig(
     val rotation: Double = 45.toDouble(),
     val font: Standard14Fonts.FontName = Standard14Fonts.FontName.HELVETICA_BOLD,
     val position: Position = Position.Center,
-    val opacity: Float = 30f,
+    val opacity: Float = 0.3f,
     val numberPosition: NumberPosition = NumberPosition(),
 )
 
 object PdfProcessor {
+    private fun handleDirectory(directory: File): SnackbarMessage? {
+        val directoryPath = directory.absolutePath
+
+        try {
+            Files.createDirectories(Paths.get(directoryPath))
+            return null
+        } catch (e: Exception) {
+            return SnackbarMessage(
+                MessageType.Error, "Failed to create directory",
+                "Failed to create directory: ${e.message}"
+            )
+        }
+    }
+
     fun batchMergePdfs(
         sourceFiles: List<File>,
         outputDirectoryPath: String,
         pattern: DatePattern,
         selectedDate: Long,
-    ) {
+    ): SnackbarMessage {
         val date = formatDate(selectedDate, pattern)
         val parentDir = File(outputDirectoryPath)
         val outputDirectory = File(parentDir, date)
-        println("outputDirectory: ${outputDirectory.absolutePath}")
-        if (!outputDirectory.exists()) {
-            val created = outputDirectory.mkdirs()
-            if (created) {
-                println("Created new directory at: ${outputDirectory.absolutePath}")
-            } else {
-                println("Warning: Failed to create directory. Path might be invalid or lacking permissions.")
-            }
+        val message = handleDirectory(outputDirectory)
+        if (message != null) {
+            return message
         }
+
         val groupedResults =
             sourceFiles.groupBy { file ->
                 file.name
@@ -111,22 +125,23 @@ object PdfProcessor {
                 outputFileName = "$name - Statement $date.pdf",
             )
         }
+        return SnackbarMessage(
+            MessageType.Success,
+            "Merge Success",
+            "Successfully merged PDFs to ${outputDirectory.absolutePath}"
+        )
     }
 
     fun mergePdfs(
         sourceFiles: List<File>,
         outputDirectoryPath: String,
         outputFileName: String,
-    ) {
+    ): SnackbarMessage {
         val outputDirectory = File(outputDirectoryPath)
 
-        if (!outputDirectory.exists()) {
-            val created = outputDirectory.mkdirs()
-            if (created) {
-                println("Created new directory at: ${outputDirectory.absolutePath}")
-            } else {
-                println("Warning: Failed to create directory. Path might be invalid or lacking permissions.")
-            }
+        val message = handleDirectory(outputDirectory)
+        if (message != null) {
+            return message
         }
 
         val finalFileName =
@@ -144,9 +159,14 @@ object PdfProcessor {
 
         try {
             merger.mergeDocuments(null)
-            println("Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}")
+
+            return SnackbarMessage(
+                MessageType.Success,
+                "Merge Success",
+                "Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}"
+            )
         } catch (e: Exception) {
-            println("Failed to merge PDFs: ${e.message}")
+            return SnackbarMessage(MessageType.Error, "Failed to merge PDFs", "Failed to merge PDFs: ${e.message}")
         }
     }
 
@@ -154,17 +174,16 @@ object PdfProcessor {
         inputFiles: List<File>,
         outputDirectoryPath: String,
         config: PdfConfig,
-    ) {
+    ): SnackbarMessage {
         val outputDirectory = File(outputDirectoryPath)
 
-        if (!outputDirectory.exists()) {
-            val created = outputDirectory.mkdirs()
-            if (created) {
-                println("Created new directory at: ${outputDirectory.absolutePath}")
-            } else {
-                println("Warning: Failed to create directory. Path might be invalid or lacking permissions.")
-            }
+        val message = handleDirectory(outputDirectory)
+        if (message != null) {
+            return message
         }
+
+        var success = 0
+        var failed: String? = null
 
         inputFiles.forEach { inputFile ->
             val outputFileName = "${inputFile.nameWithoutExtension}.pdf"
@@ -172,11 +191,18 @@ object PdfProcessor {
 
             try {
                 processSinglePdf(inputFile, outputFile, config)
-                println("Successfully processed: ${inputFile.name}")
+                success += 1
             } catch (e: Exception) {
-                println("Failed to process ${inputFile.name}: ${e.message}")
+                failed = "Failed to process ${inputFile.name}: ${e.message}"
+
             }
         }
+
+        return SnackbarMessage(
+            if (failed == null) MessageType.Success else MessageType.Error,
+            title = if (failed == null) "Process Success" else "Process Failed",
+            message = failed ?: "Successfully processed $success PDFs",
+        )
     }
 
     private fun processSinglePdf(

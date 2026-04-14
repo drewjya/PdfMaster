@@ -32,6 +32,8 @@ kotlin {
             implementation("io.insert-koin:koin-core:$koinVersion")
             implementation("io.insert-koin:koin-compose:$koinComposeVersion")
             implementation("com.cheonjaeung.compose.grid:grid:2.7.1")
+            implementation("com.pavi2410.kmp-app-updater:core:0.1.0")
+            implementation("com.pavi2410.kmp-app-updater:compose-ui:0.1.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -60,7 +62,7 @@ compose.desktop {
             )
 
             packageName = "PdfMaster"
-            packageVersion = "1.0.2"
+            packageVersion = "1.0.3"
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"

@@ -26,8 +26,8 @@ import com.drewjya.pdfmaster.helper.PdfConfig
 import com.drewjya.pdfmaster.helper.PdfProcessor
 import com.drewjya.pdfmaster.helper.ProcessType
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import org.koin.compose.koinInject
 import java.io.File
+import org.koin.compose.koinInject
 
 private val Slate900 = Color(0xFF0F172A)
 
@@ -94,7 +94,7 @@ fun HeaderContent(
             }
             Button(
                 onClick = {
-                    when (screen) {
+                    pdfViewModel.snackbarMessage.value = when (screen) {
                         Screen.Merge -> {
                             PdfProcessor.mergePdfs(
                                 pdfViewModel.pdfFiles.value,

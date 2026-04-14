@@ -11,9 +11,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -22,21 +24,44 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.graphics.Color
+import com.drewjya.pdfmaster.components.AppSnackbar
 import com.drewjya.pdfmaster.components.MainContent
 import com.drewjya.pdfmaster.components.Sidebar
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import org.koin.compose.koinInject
+import com.pavi2410.appupdater.AppUpdater
 import java.awt.datatransfer.DataFlavor
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import kotlin.time.Duration.Companion.hours
 
 private val Slate50 = Color(0xFFF8FAFC)
 
+fun startBackgroundUpdateCheck(updater: AppUpdater, scope: CoroutineScope) {
+    scope.launch {
+        while (true) {
+            updater.checkForUpdate()
+            delay(24.hours)
+        }
+    }
+}
+
 @Composable
 fun App() {
+    val updater: AppUpdater = koinInject()
+
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        startBackgroundUpdateCheck(updater, scope)
+    }
     val viewModel: PdfViewModel = koinInject()
 
     var currentScreen by remember { mutableStateOf(Screen.Merge) }
     var isExpanded by remember { mutableStateOf(true) }
+
 
     val dragAndDropTarget =
         remember {
@@ -90,6 +115,8 @@ fun App() {
                 }
             }
 
+
+
             if (viewModel.isDragging.value) {
                 Box(
                     modifier =
@@ -106,6 +133,12 @@ fun App() {
                     )
                 }
             }
+
+
+
+
+
+            AppSnackbar(modifier = Modifier.align(Alignment.BottomEnd))
         }
     }
 }
