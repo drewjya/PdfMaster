@@ -19,7 +19,7 @@ val appModule =
                     owner = "drewjya",
                     repo = "pdfmaster",
                 ),
-                currentVersion = "1.0.4",
+                currentVersion = "1.0.6",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
                             name.endsWith(".exe") ||

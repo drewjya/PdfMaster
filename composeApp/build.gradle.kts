@@ -9,7 +9,7 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
     jvm()
 
     sourceSets {
@@ -84,7 +84,7 @@ compose.desktop {
             )
 
             packageName = "PdfMaster"
-            packageVersion = "1.0.4"
+            packageVersion = "1.0.6"
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"
