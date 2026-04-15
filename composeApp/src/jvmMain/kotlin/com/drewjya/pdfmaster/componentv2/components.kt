@@ -89,7 +89,6 @@ fun App() {
                 onBackground = MaroonOnSurface,
             ),
     ) {
-
         Column(modifier = Modifier.fillMaxSize().background(MaroonNeutral)) {
             Navbar()
 

@@ -80,7 +80,7 @@ compose.desktop {
                 TargetFormat.Dmg,
                 TargetFormat.Pkg,
                 TargetFormat.Msi,
-                TargetFormat.Exe
+                TargetFormat.Exe,
             )
 
             packageName = "PdfMaster"

@@ -23,10 +23,11 @@ fun MainLayout(
 
     if (isCompact) {
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // In Column: staging takes what it needs, config takes the rest
             staging(Modifier.fillMaxWidth())
@@ -34,9 +35,10 @@ fun MainLayout(
         }
     } else {
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // In Row: split width via weights

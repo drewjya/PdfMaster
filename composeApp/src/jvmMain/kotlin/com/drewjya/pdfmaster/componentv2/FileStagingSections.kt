@@ -41,9 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
+import org.koin.compose.koinInject
 import java.io.File
 import java.math.BigDecimal
-import org.koin.compose.koinInject
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -55,17 +55,23 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     Column(
-        modifier = modifier
-            .background(MaroonSurfaceAlt.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .border(1.dp, MaroonSecondary.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+        modifier =
+            modifier
+                .background(MaroonSurfaceAlt.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .border(1.dp, MaroonSecondary.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
     ) {
         if (files.isEmpty()) {
             EmptyStateView(
                 modifier = if (!isCompact) Modifier.fillMaxSize() else Modifier.height(164.dp),
             )
         } else {
-
-            val ceiling = ceil(files.size.toBigDecimal().divide(BigDecimal("10")).toDouble()).toInt()
+            val ceiling =
+                ceil(
+                    files.size
+                        .toBigDecimal()
+                        .divide(BigDecimal("10"))
+                        .toDouble(),
+                ).toInt()
             val totalPages = max(1, ceiling)
             val currentPage = remember { mutableStateOf(1) }
             val startIdx = (currentPage.value - 1) * 10
@@ -80,16 +86,18 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
                     itemsIndexed(visibleFiles) { index, file ->
                         val actualIndex = startIdx + index + 1
                         Column(
-                            modifier = Modifier.clip(
-                                RoundedCornerShape(12.dp)
-                            ).size(140.dp)
-                                .border(
-                                    1.dp,
-                                    MaroonOnSurfaceMuted.copy(alpha = 0.2f),
-                                    RoundedCornerShape(12.dp)
-                                ).background(
-                                    Color.White,
-                                ).padding(all = 8.dp),
+                            modifier =
+                                Modifier
+                                    .clip(
+                                        RoundedCornerShape(12.dp),
+                                    ).size(140.dp)
+                                    .border(
+                                        1.dp,
+                                        MaroonOnSurfaceMuted.copy(alpha = 0.2f),
+                                        RoundedCornerShape(12.dp),
+                                    ).background(
+                                        Color.White,
+                                    ).padding(all = 8.dp),
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
@@ -97,54 +105,57 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Box(
-                                    modifier = Modifier.size(24.dp).background(
-                                        MaroonSecondary.copy(
-                                            alpha = 0.1f,
-                                        ), RoundedCornerShape(4.dp)
-                                    ),
+                                    modifier =
+                                        Modifier.size(24.dp).background(
+                                            MaroonSecondary.copy(
+                                                alpha = 0.1f,
+                                            ),
+                                            RoundedCornerShape(4.dp),
+                                        ),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = actualIndex.toString().padStart(2, '0'),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaroonOnSurfaceMuted
+                                        color = MaroonOnSurfaceMuted,
                                     )
                                 }
 
                                 Box(
-                                    modifier = Modifier.size(24.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .clickable {
-                                            pdfViewModel.removeFile(file)
-                                        }.background(
-                                            MaroonSecondary.copy(
-                                                alpha = 0.1f,
-                                            )
-                                        ),
+                                    modifier =
+                                        Modifier
+                                            .size(24.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .clickable {
+                                                pdfViewModel.removeFile(file)
+                                            }.background(
+                                                MaroonSecondary.copy(
+                                                    alpha = 0.1f,
+                                                ),
+                                            ),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
                                         com.drewjya.pdfmaster.design.Icons.Trash,
                                         contentDescription = null,
                                         tint = MaroonError,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(16.dp),
                                     )
                                 }
                             }
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     com.drewjya.pdfmaster.design.Icons.Pdf,
                                     contentDescription = null,
                                     tint = MaroonPrimary,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(32.dp),
                                 )
                             }
                             Column {
-
                                 Text(
                                     text = file.name,
                                     fontSize = 11.sp,
@@ -164,7 +175,6 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
                         }
                     }
                 }
-
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f).padding(12.dp),
@@ -175,29 +185,23 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
                         FileRailItem(actualIndex, file)
                     }
                 }
-
             }
             PaginationSystem(
                 currentPage = currentPage.value,
                 onPageChange = { newPage -> currentPage.value = newPage },
-                totalPages = totalPages
+                totalPages = totalPages,
             )
-
-
         }
     }
 }
 
 @Composable
-fun EmptyStateView(
-    modifier: Modifier = Modifier,
-) {
+fun EmptyStateView(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-
-        ) {
+    ) {
         Box(
             modifier = Modifier.size(48.dp).background(Color.White, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
@@ -299,7 +303,6 @@ fun PaginationSystem(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-
             item {
                 PaginationComponent(
                     modifier = Modifier.border(1.dp, MaroonOnSurfaceMuted.copy(alpha = 0.2f), CircleShape),
@@ -308,15 +311,15 @@ fun PaginationSystem(
                     onClick = {
                         if (currentPage <= 1) return@PaginationComponent
                         onPageChange(currentPage - 1)
-                    }) {
+                    },
+                ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Prev",
                         tint = MaroonOnSurfaceMuted,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
-
             }
 
             items(totalPages) { index ->
@@ -336,23 +339,24 @@ fun PaginationSystem(
             item {
                 PaginationComponent(
                     modifier = Modifier.border(1.dp, MaroonOnSurfaceMuted.copy(alpha = 0.2f), CircleShape),
-                    color = MaroonOnSurfaceMuted.copy(
-                        alpha =
-                            if (currentPage < totalPages) 0.1f else 0.005f
-                    ),
+                    color =
+                        MaroonOnSurfaceMuted.copy(
+                            alpha =
+                                if (currentPage < totalPages) 0.1f else 0.005f,
+                        ),
                     enabled = currentPage < totalPages,
                     onClick = {
                         if (currentPage >= totalPages) return@PaginationComponent
                         onPageChange(currentPage + 1)
-                    }) {
+                    },
+                ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Next",
                         tint = MaroonOnSurfaceMuted,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
-
             }
         }
     }
@@ -364,13 +368,17 @@ fun PaginationComponent(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onClick: () -> Unit,
-    composable: @Composable () -> Unit
+    composable: @Composable () -> Unit,
 ) {
     Box(
         modifier =
-            modifier.size(24.dp).clip(CircleShape)
-                .clickable(enabled) { onClick() }.background(
-                    color, CircleShape
+            modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .clickable(enabled) { onClick() }
+                .background(
+                    color,
+                    CircleShape,
                 ),
         contentAlignment = Alignment.Center,
     ) {
