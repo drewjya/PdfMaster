@@ -47,18 +47,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import org.koin.compose.koinInject
 import java.io.File
 import java.math.BigDecimal
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun FileStagingPane(modifier: Modifier = Modifier) {
-    val pdfViewModel: PdfViewModel = koinInject()
+fun FileStagingPane(
+    modifier: Modifier = Modifier,
+    pdfViewModel: PdfViewModel = koinViewModel()
+) {
+
     val appTheme = koinInject<AppTheme>()
-    val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle()
+    val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     // Remember list states to link with scrollbars
@@ -75,9 +79,10 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
                 modifier = if (!isCompact) Modifier.fillMaxSize() else Modifier.height(164.dp),
             )
         } else {
+            val sizes = files.size
             val ceiling =
                 ceil(
-                    files.size
+                    sizes
                         .toBigDecimal()
                         .divide(BigDecimal("10"))
                         .toDouble(),
@@ -85,7 +90,7 @@ fun FileStagingPane(modifier: Modifier = Modifier) {
             val totalPages = max(1, ceiling)
             val currentPage = remember { mutableStateOf(1) }
             val startIdx = (currentPage.value - 1) * 10
-            val endIdx = min(startIdx + 10, files.size) - 1
+            val endIdx = min(startIdx + 10, sizes) - 1
             val visibleFiles = files.slice(startIdx..endIdx)
 
             if (isCompact) {

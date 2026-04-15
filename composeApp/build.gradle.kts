@@ -49,6 +49,8 @@ kotlin {
 
             implementation(libs.slf4j.simple)
             implementation(libs.jcl.over.slf4j)
+
+            implementation("com.github.librepdf:openpdf:2.0.3")
         }
 
         commonTest.dependencies {

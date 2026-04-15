@@ -1,10 +1,11 @@
 package com.drewjya.pdfmaster.helper
 
+import com.lowagie.text.FontFactory
 import io.github.vinceglb.filekit.utils.toPath
 import io.github.xxfast.kstore.KStore
 import io.github.xxfast.kstore.file.storeOf
-import kotlinx.coroutines.flow.Flow
 import java.io.File
+import kotlinx.coroutines.flow.Flow
 
 class ConfigManager {
     private val appDir = System.getProperty("user.home") + "/.pdfmaster"
@@ -12,6 +13,8 @@ class ConfigManager {
 
     init {
         File(appDir).mkdirs()
+
+        FontFactory.registerDirectories()
     }
 
     private val defaultId =
@@ -24,11 +27,11 @@ class ConfigManager {
             savedConfigs =
                 mapOf(
                     defaultId to
-                        OutputConfiguration(
-                            id = defaultId,
-                            name = "Default Configuration",
-                            targetDirectory = System.getProperty("user.home"),
-                        ),
+                            OutputConfiguration(
+                                id = defaultId,
+                                name = "Default Configuration",
+                                targetDirectory = System.getProperty("user.home"),
+                            ),
                 ),
         )
 

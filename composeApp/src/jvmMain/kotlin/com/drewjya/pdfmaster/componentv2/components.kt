@@ -31,6 +31,7 @@ import com.drewjya.pdfmaster.components.MessageType
 import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
+import com.drewjya.pdfmaster.helper.PdfUtils
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -70,11 +71,14 @@ fun App() {
 }
 
 @Composable
-fun DockedFooter(viewModel: ConfigViewModel = koinViewModel()) {
+fun DockedFooter(
+    viewModel: ConfigViewModel = koinViewModel(),
+    pdfViewModel: PdfViewModel = koinViewModel()
+) {
     val appTheme: AppTheme = koinInject()
-    val pdfViewModel: PdfViewModel = koinInject()
+
     val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
-    val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle()
+    val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
 
     val pickerDirectory =
         rememberDirectoryPickerLauncher(
@@ -125,7 +129,7 @@ fun DockedFooter(viewModel: ConfigViewModel = koinViewModel()) {
         val fileCount = files.size
         Box(modifier = Modifier.weight(0.6f).height(height = 32.dp), contentAlignment = Alignment.CenterEnd) {
             Button(
-                onClick = { },
+                onClick = { PdfUtils.processFiles(files = files, configuration = activeConfig ?: return@Button) },
                 enabled = fileCount > 0,
                 colors =
                     ButtonDefaults.buttonColors(

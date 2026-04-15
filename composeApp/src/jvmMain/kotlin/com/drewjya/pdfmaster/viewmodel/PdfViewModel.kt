@@ -7,29 +7,36 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.data.AppPreferences
+import com.drewjya.pdfmaster.helper.getAvailableFonts
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.io.File
 
 class PdfViewModel(
     private val prefs: AppPreferences,
 ) : ViewModel() {
     private val _pdfFiles = MutableStateFlow<List<File>>(emptyList())
-    val pdfFiles: StateFlow<List<File>> = _pdfFiles
+    val pdfFiles: StateFlow<List<File>> = _pdfFiles.asStateFlow()
 
-    val snackbarMessage = mutableStateOf<SnackbarMessage?>(null)
 
     fun addFiles(newFiles: List<File>) {
-        clearFiles()
-        val onlyPdfs = newFiles.filter { it.extension.lowercase() == "pdf" }
-        _pdfFiles.value += onlyPdfs
+        val onlyPdfs = newFiles.filter { it.extension.equals("pdf", ignoreCase = true) }
+        // Emitting a brand new list reference triggers the StateFlow collector
+        _pdfFiles.value = _pdfFiles.value + onlyPdfs
+
+        println("PDFs: ${_pdfFiles.value.size}")
     }
 
     fun removeFile(file: File) {
         _pdfFiles.value = _pdfFiles.value.filter { it != file }
     }
+
+    val snackbarMessage = mutableStateOf<SnackbarMessage?>(null)
+
+    val fonts = MutableStateFlow(getAvailableFonts())
 
     fun moveFile(
         file: File,

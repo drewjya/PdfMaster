@@ -16,7 +16,7 @@ import org.koin.dsl.module
 val appModule =
     module {
         single { AppPreferences() }
-        single { PdfViewModel(get()) }
+        viewModelOf(::PdfViewModel)
 
         single { ConfigManager() }
         viewModelOf(::ConfigViewModel)
@@ -31,12 +31,12 @@ val appModule =
                 currentVersion = "1.1.7",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
-                        name.endsWith(".exe") ||
-                        name.endsWith(".dmg") ||
-                        name.endsWith(".AppImage") ||
-                        name.endsWith(".deb") ||
-                        name.endsWith(".rpm") ||
-                        name.endsWith(".jar")
+                            name.endsWith(".exe") ||
+                            name.endsWith(".dmg") ||
+                            name.endsWith(".AppImage") ||
+                            name.endsWith(".deb") ||
+                            name.endsWith(".rpm") ||
+                            name.endsWith(".jar")
                 },
                 downloader = DesktopAssetDownloader(),
                 installer = DesktopAssetInstaller(),

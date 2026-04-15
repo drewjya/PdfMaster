@@ -1,8 +1,18 @@
 package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
+import com.lowagie.text.FontFactory
+import java.util.UUID
 import kotlinx.serialization.Serializable
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts
+
+
+fun getAvailableFonts(): List<String> {
+    // 1. Scan standard system font directories (Windows, macOS, Linux)
+    FontFactory.registerDirectories()
+
+    // 2. Return the names of all discovered fonts
+    return (FontFactory.getRegisteredFonts().toList()).sortedBy { it }
+}
 
 @Serializable
 enum class Position {
@@ -67,14 +77,12 @@ enum class EnhancementType {
 data class IdentitySettings(
     val text: String = "",
     val position: Position = Position.Center,
-    val fontName: String = Standard14Fonts.FontName.HELVETICA_BOLD.name,
+    val fontName: String = "",
     val fontSize: Int = 60,
     val rotation: Int = 45,
     val opacity: Float = 0.3f,
     val colorLong: ULong = Color.Black.value,
 ) {
-    val font: Standard14Fonts.FontName
-        get() = Standard14Fonts.FontName.valueOf(fontName)
 
     val color: Color
         get() = Color(colorLong)
@@ -84,23 +92,19 @@ data class IdentitySettings(
 data class NumberingSettings(
     val format: PageFormat = PageFormat.All,
     val fontSize: Int = 12,
-    val fontName: String = Standard14Fonts.FontName.HELVETICA_BOLD.name,
+    val fontName: String = "",
     val x: Int = 0,
     val y: Int = 0,
     val colorLong: ULong = Color.Black.value,
 ) {
-    val font: Standard14Fonts.FontName
-        get() = Standard14Fonts.FontName.valueOf(fontName)
+
     val color: Color
         get() = Color(colorLong)
 }
 
 @Serializable
 data class OutputConfiguration(
-    val id: String =
-        java.util.UUID
-            .randomUUID()
-            .toString(),
+    val id: String = UUID.randomUUID().toString(),
     val mode: ProcessMode = ProcessMode.None,
     val activeEnhancements: Set<EnhancementType> = emptySet(),
     val name: String,

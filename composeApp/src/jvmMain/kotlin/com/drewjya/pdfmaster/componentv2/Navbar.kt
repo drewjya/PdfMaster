@@ -18,17 +18,19 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLaunche
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun Navbar() {
+fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
     val appTheme: AppTheme = koinInject()
-    val pdfViewModel: PdfViewModel = koinInject()
+    
     val pickerFiles =
         rememberFilePickerLauncher(
             type = FileKitType.File(extensions = setOf("pdf")),
             mode = FileKitMode.Multiple(),
             onResult = { files ->
                 if (files != null) {
+                    println("Selected files: ${files.map { it.file.name }}")
                     pdfViewModel.addFiles(files.map { it.file })
                 }
             },

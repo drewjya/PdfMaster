@@ -60,23 +60,25 @@ import com.drewjya.pdfmaster.helper.PageFormat
 import com.drewjya.pdfmaster.helper.Position
 import com.drewjya.pdfmaster.helper.ProcessMode
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
+import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts
+import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import java.math.BigDecimal
 import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
 fun OutputParameterSections(
     modifier: Modifier,
-    viewModel: ConfigViewModel = koinViewModel(),
+    configViewModel: ConfigViewModel = koinViewModel(),
+    pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
     val appTheme: AppTheme = koinInject()
-    val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
+    val activeConfig by configViewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
+    val pdfState by pdfViewModel.fonts.collectAsStateWithLifecycle(initialValue = null)
     val clip = RoundedCornerShape(8.dp)
 
     Column(
@@ -97,9 +99,9 @@ fun OutputParameterSections(
                 active = active,
                 onToggle = {
                     if (it) {
-                        viewModel.updateProcessMode(ProcessMode.Batch)
+                        configViewModel.updateProcessMode(ProcessMode.Batch)
                     } else {
-                        viewModel.updateProcessMode(ProcessMode.None)
+                        configViewModel.updateProcessMode(ProcessMode.None)
                     }
                 },
                 expanded = expanded,
@@ -116,7 +118,7 @@ fun OutputParameterSections(
                         label = "DATE FORMAT",
                         value = batchSettings?.dateFormat,
                         onSelected = { value ->
-                            viewModel.updateBatchSettings { it.copy(dateFormat = value) }
+                            configViewModel.updateBatchSettings { it.copy(dateFormat = value) }
                         },
                         placeholder = "Select date format",
                         items = DatePattern.entries,
@@ -129,7 +131,7 @@ fun OutputParameterSections(
                         label = "SELECT DATE",
                         value = batchSettings?.selectedDate,
                         onTap = { selected ->
-                            viewModel.updateBatchSettings { it.copy(selectedDate = selected) }
+                            configViewModel.updateBatchSettings { it.copy(selectedDate = selected) }
                         },
                     )
                 }
@@ -146,9 +148,9 @@ fun OutputParameterSections(
                 active = active,
                 onToggle = {
                     if (it) {
-                        viewModel.updateProcessMode(ProcessMode.Merge)
+                        configViewModel.updateProcessMode(ProcessMode.Merge)
                     } else {
-                        viewModel.updateProcessMode(ProcessMode.None)
+                        configViewModel.updateProcessMode(ProcessMode.None)
                     }
                 },
             )
@@ -160,7 +162,7 @@ fun OutputParameterSections(
                         onResult = { file ->
                             if (file != null) {
                                 val fileName = file.file.name
-                                viewModel.updateMergeSettings { it.copy(mergeName = fileName) }
+                                configViewModel.updateMergeSettings { it.copy(mergeName = fileName) }
                             }
                         },
                     )
@@ -169,7 +171,7 @@ fun OutputParameterSections(
                     enabled = active,
                     label = "MERGE NAME",
                     onValueChange = { value ->
-                        viewModel.updateMergeSettings { it.copy(mergeName = value) }
+                        configViewModel.updateMergeSettings { it.copy(mergeName = value) }
                     },
                     onIconClick = {
                         pickerFile.launch()
@@ -190,12 +192,12 @@ fun OutputParameterSections(
                 expanded = expanded,
                 onExpand = onExpand,
                 active = active,
-                onToggle = { viewModel.toggleEnhancement(EnhancementType.Identity) },
+                onToggle = { configViewModel.toggleEnhancement(EnhancementType.Identity) },
             )
             ConfigWrapper(active = active, expanded = expanded) {
                 Input(
                     text = identitySettings?.text ?: "",
-                    onValueChange = { value -> viewModel.updateIdentitySettings { it.copy(text = value) } },
+                    onValueChange = { value -> configViewModel.updateIdentitySettings { it.copy(text = value) } },
                     label = "WATERMARK TEXT",
                     placeholder = "Input watermark",
                     enabled = active,
@@ -207,7 +209,7 @@ fun OutputParameterSections(
                         enabled = active,
                         label = "POSITION",
                         value = identitySettings?.position,
-                        onSelected = { value -> viewModel.updateIdentitySettings { it.copy(position = value) } },
+                        onSelected = { value -> configViewModel.updateIdentitySettings { it.copy(position = value) } },
                         placeholder = "Select position",
                         items = Position.entries,
                         getLabel = { it.name },
@@ -216,11 +218,11 @@ fun OutputParameterSections(
                         modifier = Modifier.weight(1f),
                         enabled = active,
                         label = "FONT",
-                        value = identitySettings?.font,
-                        onSelected = { value -> viewModel.updateIdentitySettings { it.copy(fontName = value.name) } },
+                        value = identitySettings?.fontName,
+                        onSelected = { value -> configViewModel.updateIdentitySettings { it.copy(fontName = value) } },
                         placeholder = "Select font",
-                        items = Standard14Fonts.FontName.entries,
-                        getLabel = { it.name },
+                        items = pdfState?.toList() ?: emptyList(),
+                        getLabel = { it },
                     )
 
                     Input(
@@ -233,9 +235,9 @@ fun OutputParameterSections(
 
                             if (value != null) {
                                 val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
-                                viewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
+                                configViewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
                             } else if (it.trim().isBlank()) {
-                                viewModel.updateIdentitySettings { it.copy(fontSize = 1) }
+                                configViewModel.updateIdentitySettings { it.copy(fontSize = 1) }
                             }
                         },
                     )
@@ -250,9 +252,9 @@ fun OutputParameterSections(
 
                             if (value != null) {
                                 val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("360"))
-                                viewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
+                                configViewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
                             } else if (it.trim().isBlank()) {
-                                viewModel.updateIdentitySettings { it.copy(rotation = 0) }
+                                configViewModel.updateIdentitySettings { it.copy(rotation = 0) }
                             }
                         },
                     )
@@ -273,12 +275,12 @@ fun OutputParameterSections(
                             println(str)
                             if (value != null) {
                                 val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("100"))
-                                viewModel.updateIdentitySettings {
+                                configViewModel.updateIdentitySettings {
                                     it.copy(opacity = clamped.toFloat() / 100f) // ← fix here
                                 }
                             } else {
                                 if (str.trim().isBlank()) {
-                                    viewModel.updateIdentitySettings { it.copy(opacity = 0f) }
+                                    configViewModel.updateIdentitySettings { it.copy(opacity = 0f) }
                                 }
                             }
                         },
@@ -299,7 +301,7 @@ fun OutputParameterSections(
                 onExpand = onExpand,
                 active = active,
                 onToggle = {
-                    viewModel.toggleEnhancement(EnhancementType.Numbering)
+                    configViewModel.toggleEnhancement(EnhancementType.Numbering)
                 },
             )
             ConfigWrapper(active = active, expanded = expanded) {
@@ -309,7 +311,7 @@ fun OutputParameterSections(
                         enabled = active,
                         label = "PAGE FORMAT",
                         value = numberingSettings?.format,
-                        onSelected = { viewModel.updateNumberingSettings { settings -> settings.copy(format = it) } },
+                        onSelected = { configViewModel.updateNumberingSettings { settings -> settings.copy(format = it) } },
                         placeholder = "Select date format",
                         items = PageFormat.entries,
                         getLabel = { it.value },
@@ -318,13 +320,14 @@ fun OutputParameterSections(
                         modifier = Modifier.weight(1f),
                         enabled = active,
                         label = "FONT",
-                        value = numberingSettings?.font,
+                        value = numberingSettings?.fontName,
+
                         onSelected = {
-                            viewModel.updateNumberingSettings { settings -> settings.copy(fontName = it.name) }
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(fontName = it) }
                         },
                         placeholder = "Select font",
-                        items = Standard14Fonts.FontName.entries,
-                        getLabel = { it.name },
+                        items = pdfState?.toList() ?: emptyList(),
+                        getLabel = { it },
                     )
 
                     Input(
@@ -336,9 +339,9 @@ fun OutputParameterSections(
 
                             if (value != null) {
                                 val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
-                                viewModel.updateNumberingSettings { settings -> settings.copy(fontSize = clamped.toInt()) }
+                                configViewModel.updateNumberingSettings { settings -> settings.copy(fontSize = clamped.toInt()) }
                             } else if (it.trim().isBlank()) {
-                                viewModel.updateNumberingSettings { settings -> settings.copy(fontSize = 1) }
+                                configViewModel.updateNumberingSettings { settings -> settings.copy(fontSize = 1) }
                             }
                         },
                     )
@@ -355,9 +358,9 @@ fun OutputParameterSections(
                             onValueChange = {
                                 val value = it.toBigDecimalOrNull()
                                 if (value != null) {
-                                    viewModel.updateNumberingSettings { settings -> settings.copy(x = value.toInt()) }
+                                    configViewModel.updateNumberingSettings { settings -> settings.copy(x = value.toInt()) }
                                 } else if (it.trim().isBlank()) {
-                                    viewModel.updateNumberingSettings { settings -> settings.copy(x = 0) }
+                                    configViewModel.updateNumberingSettings { settings -> settings.copy(x = 0) }
                                 }
                             },
                         )
@@ -368,9 +371,9 @@ fun OutputParameterSections(
                             onValueChange = {
                                 val value = it.toBigDecimalOrNull()
                                 if (value != null) {
-                                    viewModel.updateNumberingSettings { settings -> settings.copy(y = value.toInt()) }
+                                    configViewModel.updateNumberingSettings { settings -> settings.copy(y = value.toInt()) }
                                 } else if (it.trim().isBlank()) {
-                                    viewModel.updateNumberingSettings { settings -> settings.copy(y = 0) }
+                                    configViewModel.updateNumberingSettings { settings -> settings.copy(y = 0) }
                                 }
                             },
                         )
