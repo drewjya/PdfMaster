@@ -39,14 +39,15 @@ fun Navbar() {
                 if (directory != null) {
                     println("Selected directory: ${directory.path}")
                     pdfViewModel.inputDirectory.value = directory.path
-                    val pdfFiles =
+                    println("${directory.file.listFiles()?.size}")
+                    val files =
                         directory.file
-                            .listFiles { file ->
-                                file.isFile && file.extension.equals("pdf", ignoreCase = true)
-                            }.orEmpty()
+                            .listFiles()
+                            .orEmpty()
                             .toList()
-                    val files = pdfFiles.filter { it.name.contains("-") }
-                    pdfViewModel.addFiles(files)
+                    val filteredFiles =
+                        files.filter { it.isFile && it.extension.equals("pdf", ignoreCase = true) }
+                    pdfViewModel.addFiles(filteredFiles)
                 }
             },
         )

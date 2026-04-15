@@ -6,6 +6,7 @@ import com.drewjya.pdfmaster.componentv2.App
 import com.drewjya.pdfmaster.di.appModule
 import io.github.vinceglb.filekit.FileKit
 import org.koin.core.context.GlobalContext.startKoin
+import java.awt.Dimension
 
 fun main() {
     FileKit.init(appId = "PdfMaster")
@@ -17,6 +18,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "PdfMaster",
         ) {
+            window.minimumSize = Dimension(500, 500)
             App()
         }
     }
