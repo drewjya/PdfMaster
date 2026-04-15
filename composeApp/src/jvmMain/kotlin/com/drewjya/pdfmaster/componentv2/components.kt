@@ -19,8 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -33,10 +31,12 @@ import com.drewjya.pdfmaster.components.MessageType
 import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
+import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.path
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun App() {
@@ -70,19 +70,21 @@ fun App() {
 }
 
 @Composable
-fun DockedFooter() {
+fun DockedFooter(viewModel: ConfigViewModel = koinViewModel()) {
+    val appTheme: AppTheme = koinInject()
     val pdfViewModel: PdfViewModel = koinInject()
-    val appTheme = koinInject<AppTheme>()
+    val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
     val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle()
-    val value = remember { mutableStateOf("") }
+
     val pickerDirectory =
         rememberDirectoryPickerLauncher(
             onResult = { directory ->
                 if (directory != null) {
                     val selectedFolder = directory.file
-                    // 2. Check if Windows/Mac actually lets us write here!
                     if (selectedFolder.canWrite()) {
-                        value.value = directory.path
+                        viewModel.updateBasicInfo(
+                            targetDir = directory.path,
+                        )
                     } else {
                         pdfViewModel.snackbarMessage.value =
                             SnackbarMessage(
@@ -110,8 +112,12 @@ fun DockedFooter() {
             InputIcon(
                 label = "TARGET DIRECTORY",
                 onIconClick = pickerDirectory::launch,
-                onValueChange = { value.value = it },
-                text = value.value,
+                onValueChange = {
+                    viewModel.updateBasicInfo(
+                        targetDir = it,
+                    )
+                },
+                text = activeConfig?.targetDirectory ?: "",
                 icon = Icons.FolderOutput,
             )
         }

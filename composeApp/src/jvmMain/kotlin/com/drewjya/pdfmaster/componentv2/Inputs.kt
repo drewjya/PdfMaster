@@ -183,7 +183,7 @@ fun InputIcon(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatePicker(
+fun InputDatePicker(
     modifier: Modifier = Modifier,
     label: String = "",
     value: Long? = null,
@@ -207,7 +207,7 @@ fun DatePicker(
                 Modifier
                     .fillMaxWidth()
                     .clip(clip)
-                    .clickable { showPicker = true }
+                    .clickable(enabled = enabled) { showPicker = true }
                     .background(color = appTheme.surfaceAlt, shape = clip)
                     .border(width = 1.dp, color = Color.Transparent, shape = clip)
                     .height(height = 32.dp)
@@ -290,7 +290,7 @@ fun <T> DropdownPicker(
                 .fillMaxWidth()
                 .onSizeChanged { dropdownWidth = it.width }
                 .clip(clip)
-                .clickable { showSuggestions = true }
+                .clickable(enabled = enabled) { showSuggestions = true }
                 .background(color = appTheme.surfaceAlt, shape = clip)
                 .border(width = 1.dp, color = Color.Transparent, shape = clip)
                 .height(height = 32.dp)

@@ -281,6 +281,13 @@ fun FileRailItem(
             color = appTheme.onSurfaceMuted,
             modifier = Modifier.width(32.dp),
         )
+
+        Icon(
+            com.drewjya.pdfmaster.design.Icons.Pdf,
+            contentDescription = null,
+            tint = appTheme.onSurfaceMuted,
+        )
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 file.name,

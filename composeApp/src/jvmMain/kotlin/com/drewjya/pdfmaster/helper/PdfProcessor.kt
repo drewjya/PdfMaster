@@ -23,38 +23,7 @@ enum class ProcessType {
     All,
 }
 
-enum class Position {
-    Top,
-    Bottom,
-    Center,
-    TopLeft,
-    TopRight,
-    BottomLeft,
-    BottomRight,
-}
-
-enum class PageFormat(
-    val value: String,
-) {
-    Page("{page}"),
-    PageSize("{page} of {total}"),
-    All("Page {page} of {total}"),
-}
-
-data class NumberPosition(
-    val x: Int = 0,
-    val y: Int = 0,
-)
-
-enum class DatePattern(
-    val pattern: String,
-) {
-    Date("dd-MM-yyyy"),
-    Long("dd MMMM yyyy"),
-    Iso("yyyy-MM-dd"),
-}
-
-data class PdfConfig(
+class PdfConfig(
     val type: ProcessType = ProcessType.All,
     val watermarkText: String = "",
     val watermarkFontSize: Int = 60,
@@ -111,7 +80,7 @@ object PdfProcessor {
                 files.sortedBy { file ->
                     val fileName = file.name
                     when {
-                        fileName.contains("Portofolio Activity", ignoreCase = true) -> 1
+                        fileName.contains("Portfolio Activity", ignoreCase = true) -> 1
                         fileName.contains("Statement Position", ignoreCase = true) -> 3
                         else -> 2 // 'other' or any other file
                     }
@@ -353,35 +322,6 @@ object PdfProcessor {
             }
 
         return Pair(cx + startOffsetX, cy + startOffsetY)
-    }
-
-    private fun stampSingle(
-        cs: PDPageContentStream,
-        anchorX: Float,
-        anchorY: Float,
-        config: PdfConfig,
-    ) {
-        val theta = Math.toRadians(config.rotation)
-        val cosT = cos(theta).toFloat()
-        val sinT = sin(theta).toFloat()
-
-        cs.beginText()
-        val matrix =
-            Matrix(
-                // a
-                cosT, // b
-                sinT,
-                // c
-                -sinT, // d
-                cosT,
-                // e
-                anchorX, // f
-                anchorY,
-            )
-
-        cs.setTextMatrix(matrix)
-        cs.showText(config.watermarkText)
-        cs.endText()
     }
 
     private fun applyStampToStream(

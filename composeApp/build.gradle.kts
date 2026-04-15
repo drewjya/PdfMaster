@@ -29,6 +29,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.core.viewmodel)
 
             // Ktor & Logic
             implementation(libs.ktor.client.core)
@@ -38,6 +40,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            implementation("io.github.xxfast:kstore:0.9.1")
+            implementation("io.github.xxfast:kstore-file:0.9.1")
 
             // File Handling
             implementation(libs.filekit.core)
@@ -84,7 +88,7 @@ compose.desktop {
             )
 
             packageName = "PdfMaster"
-            packageVersion = "1.0.6"
+            packageVersion = "1.1.7"
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"

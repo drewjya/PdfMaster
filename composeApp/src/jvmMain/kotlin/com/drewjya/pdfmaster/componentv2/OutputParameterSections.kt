@@ -50,25 +50,33 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drewjya.pdfmaster.components.ColorPicker
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.DatePattern
+import com.drewjya.pdfmaster.helper.EnhancementType
 import com.drewjya.pdfmaster.helper.PageFormat
 import com.drewjya.pdfmaster.helper.Position
+import com.drewjya.pdfmaster.helper.ProcessMode
+import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import java.math.BigDecimal
 import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
-fun OutputParameterSections(modifier: Modifier) {
+fun OutputParameterSections(
+    modifier: Modifier,
+    viewModel: ConfigViewModel = koinViewModel(),
+) {
     val appTheme: AppTheme = koinInject()
-
+    val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
     val clip = RoundedCornerShape(8.dp)
 
     Column(
@@ -81,55 +89,70 @@ fun OutputParameterSections(modifier: Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CardWrapper { expanded, onExpand ->
-            val active = remember { mutableStateOf(true) }
+            val active = activeConfig?.mode == ProcessMode.Batch
 
             CardTitle(
                 title = "Batch",
                 icon = Icons.Batch,
-                active = active.value,
-                onToggle = { active.value = it },
+                active = active,
+                onToggle = {
+                    if (it) {
+                        viewModel.updateProcessMode(ProcessMode.Batch)
+                    } else {
+                        viewModel.updateProcessMode(ProcessMode.None)
+                    }
+                },
                 expanded = expanded,
                 onExpand = onExpand,
             )
 
-            ConfigWrapper(active = active.value, expanded = expanded) {
-                val value = remember { mutableStateOf<Long?>(null) }
-                val format = remember { mutableStateOf<DatePattern?>(null) }
+            ConfigWrapper(active = active, expanded = expanded) {
+                val batchSettings = activeConfig?.batchSettings
+
                 DynamicPosition(maxItemsInEachRow = { if (it > 350.dp) 2 else 1 }) {
                     DropdownPicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "DATE FORMAT",
-                        value = format.value,
-                        onSelected = { format.value = it },
+                        value = batchSettings?.dateFormat,
+                        onSelected = { value ->
+                            viewModel.updateBatchSettings { it.copy(dateFormat = value) }
+                        },
                         placeholder = "Select date format",
                         items = DatePattern.entries,
                         getLabel = { it.pattern },
                     )
 
-                    DatePicker(
+                    InputDatePicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "SELECT DATE",
-                        value = value.value,
-                        onTap = { value.value = it },
+                        value = batchSettings?.selectedDate,
+                        onTap = { selected ->
+                            viewModel.updateBatchSettings { it.copy(selectedDate = selected) }
+                        },
                     )
                 }
             }
         }
         CardWrapper { expanded, onExpand ->
-            val active = remember { mutableStateOf(true) }
-
+            val active = activeConfig?.mode == ProcessMode.Merge
+            val mergeSettings = activeConfig?.mergeSettings
             CardTitle(
                 title = "Merge",
                 icon = Icons.Merge,
                 expanded = expanded,
                 onExpand = onExpand,
-                active = active.value,
-                onToggle = { active.value = it },
+                active = active,
+                onToggle = {
+                    if (it) {
+                        viewModel.updateProcessMode(ProcessMode.Merge)
+                    } else {
+                        viewModel.updateProcessMode(ProcessMode.None)
+                    }
+                },
             )
-            ConfigWrapper(active = active.value, expanded = expanded) {
-                val value = remember { mutableStateOf("") }
+            ConfigWrapper(active = active, expanded = expanded) {
                 val pickerFile =
                     rememberFilePickerLauncher(
                         type = FileKitType.File(extensions = setOf("pdf")),
@@ -137,67 +160,64 @@ fun OutputParameterSections(modifier: Modifier) {
                         onResult = { file ->
                             if (file != null) {
                                 val fileName = file.file.name
-                                value.value = fileName
+                                viewModel.updateMergeSettings { it.copy(mergeName = fileName) }
                             }
                         },
                     )
 
                 InputIcon(
-                    enabled = active.value,
+                    enabled = active,
                     label = "MERGE NAME",
-                    onValueChange = { value.value = it },
+                    onValueChange = { value ->
+                        viewModel.updateMergeSettings { it.copy(mergeName = value) }
+                    },
                     onIconClick = {
                         pickerFile.launch()
                     },
-                    text = value.value,
+                    text = mergeSettings?.mergeName ?: "",
                     icon = Icons.FileAdd,
                 )
             }
         }
         CardWrapper { expanded, onExpand ->
 
-            val active = remember { mutableStateOf(true) }
-            val watermark = remember { mutableStateOf("") }
-            val opacity = remember { mutableStateOf("0") }
-            val position = remember { mutableStateOf<Position?>(null) }
-            val fonts = remember { mutableStateOf<Standard14Fonts.FontName?>(null) }
-            val fontSize = remember { mutableStateOf("12") }
-            val rotation = remember { mutableStateOf("0") }
+            val active = activeConfig?.activeEnhancements?.contains(EnhancementType.Identity) ?: false
+            val identitySettings = activeConfig?.identitySettings
             val controller = rememberColorPickerController()
             CardTitle(
                 title = "Identity",
                 icon = Icons.Identity,
                 expanded = expanded,
                 onExpand = onExpand,
-                active = active.value,
-                onToggle = { active.value = it },
+                active = active,
+                onToggle = { viewModel.toggleEnhancement(EnhancementType.Identity) },
             )
-            ConfigWrapper(active = active.value, expanded = expanded) {
+            ConfigWrapper(active = active, expanded = expanded) {
                 Input(
-                    text = watermark.value,
-                    onValueChange = { watermark.value = it },
+                    text = identitySettings?.text ?: "",
+                    onValueChange = { value -> viewModel.updateIdentitySettings { it.copy(text = value) } },
                     label = "WATERMARK TEXT",
                     placeholder = "Input watermark",
-                    enabled = active.value,
+                    enabled = active,
                 )
 
                 DynamicPosition(maxItemsInEachRow = { if (it > 350.dp) 2 else 1 }) {
                     DropdownPicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "POSITION",
-                        value = position.value,
-                        onSelected = { position.value = it },
+                        value = identitySettings?.position,
+                        onSelected = { value -> viewModel.updateIdentitySettings { it.copy(position = value) } },
                         placeholder = "Select position",
                         items = Position.entries,
                         getLabel = { it.name },
                     )
                     DropdownPicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "FONT",
-                        value = fonts.value,
-                        onSelected = { fonts.value = it },
+                        value = identitySettings?.font,
+                        onSelected = { value -> viewModel.updateIdentitySettings { it.copy(fontName = value.name) } },
                         placeholder = "Select font",
                         items = Standard14Fonts.FontName.entries,
                         getLabel = { it.name },
@@ -206,14 +226,16 @@ fun OutputParameterSections(modifier: Modifier) {
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "FONT SIZE",
-                        text = fontSize.value,
+                        enabled = active,
+                        text = identitySettings?.fontSize?.toString() ?: "1",
                         onValueChange = {
                             val value = it.toBigDecimalOrNull()
+
                             if (value != null) {
-                                fontSize.value = value.toInt().toString()
-                            }
-                            if (it.trim().isBlank()) {
-                                fontSize.value = "0"
+                                val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
+                                viewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
+                            } else if (it.trim().isBlank()) {
+                                viewModel.updateIdentitySettings { it.copy(fontSize = 1) }
                             }
                         },
                     )
@@ -221,14 +243,16 @@ fun OutputParameterSections(modifier: Modifier) {
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "ROTATION",
-                        text = rotation.value,
+                        text = identitySettings?.rotation?.toString() ?: "0",
+                        enabled = active,
                         onValueChange = {
                             val value = it.toBigDecimalOrNull()
+
                             if (value != null) {
-                                rotation.value = value.toInt().toString()
-                            }
-                            if (it.trim().isBlank()) {
-                                rotation.value = "0"
+                                val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("360"))
+                                viewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
+                            } else if (it.trim().isBlank()) {
+                                viewModel.updateIdentitySettings { it.copy(rotation = 0) }
                             }
                         },
                     )
@@ -237,63 +261,67 @@ fun OutputParameterSections(modifier: Modifier) {
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "OPACITY",
-                        text = opacity.value,
-                        onValueChange = {
-                            val value = it.toBigDecimalOrNull()
+                        text =
+                            identitySettings
+                                ?.opacity
+                                ?.run {
+                                    (this * 100).toInt()
+                                }?.toString() ?: "0",
+                        enabled = active,
+                        onValueChange = { str ->
+                            val value = str.toBigDecimalOrNull()
+                            println(str)
                             if (value != null) {
-                                val big0 = BigDecimal("0")
-                                val big100 = BigDecimal("100")
-                                when {
-                                    value in big0..big100 -> opacity.value = value.toInt().toString()
-                                    value < big0 -> opacity.value = big0.toString()
-                                    value > big100 -> opacity.value = big100.toString()
+                                val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("100"))
+                                viewModel.updateIdentitySettings {
+                                    it.copy(opacity = clamped.toFloat() / 100f) // ← fix here
                                 }
-                            }
-                            if (it.trim().isBlank()) {
-                                opacity.value = "0"
+                            } else {
+                                if (str.trim().isBlank()) {
+                                    viewModel.updateIdentitySettings { it.copy(opacity = 0f) }
+                                }
                             }
                         },
                         placeholder = "Input opacity",
-                        enabled = active.value,
                     )
                 }
             }
         }
         CardWrapper { expanded, onExpand ->
-            val active = remember { mutableStateOf(true) }
-            val format = remember { mutableStateOf<PageFormat?>(null) }
-            val fonts = remember { mutableStateOf<Standard14Fonts.FontName?>(null) }
+            val active = activeConfig?.activeEnhancements?.contains(EnhancementType.Numbering) ?: false
+            val numberingSettings = activeConfig?.numberingSettings
             val controller = rememberColorPickerController()
 
-            val fontSize = remember { mutableStateOf("12") }
-            val x = remember { mutableStateOf("0") }
-            val y = remember { mutableStateOf("0") }
             CardTitle(
                 title = "Numbering",
                 icon = Icons.Numbering,
                 expanded = expanded,
                 onExpand = onExpand,
-                active = active.value,
-                onToggle = { active.value = it },
+                active = active,
+                onToggle = {
+                    viewModel.toggleEnhancement(EnhancementType.Numbering)
+                },
             )
-            ConfigWrapper(active = active.value, expanded = expanded) {
+            ConfigWrapper(active = active, expanded = expanded) {
                 DynamicPosition(maxItemsInEachRow = { if (it > 350.dp) 2 else 1 }) {
                     DropdownPicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "PAGE FORMAT",
-                        value = format.value,
-                        onSelected = { format.value = it },
+                        value = numberingSettings?.format,
+                        onSelected = { viewModel.updateNumberingSettings { settings -> settings.copy(format = it) } },
                         placeholder = "Select date format",
                         items = PageFormat.entries,
                         getLabel = { it.value },
                     )
                     DropdownPicker(
                         modifier = Modifier.weight(1f),
-                        enabled = active.value,
+                        enabled = active,
                         label = "FONT",
-                        value = fonts.value,
-                        onSelected = { fonts.value = it },
+                        value = numberingSettings?.font,
+                        onSelected = {
+                            viewModel.updateNumberingSettings { settings -> settings.copy(fontName = it.name) }
+                        },
                         placeholder = "Select font",
                         items = Standard14Fonts.FontName.entries,
                         getLabel = { it.name },
@@ -302,14 +330,15 @@ fun OutputParameterSections(modifier: Modifier) {
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "FONT SIZE",
-                        text = fontSize.value,
+                        text = numberingSettings?.fontSize?.toString() ?: "1",
                         onValueChange = {
                             val value = it.toBigDecimalOrNull()
+
                             if (value != null) {
-                                fontSize.value = value.toInt().toString()
-                            }
-                            if (it.trim().isBlank()) {
-                                fontSize.value = "0"
+                                val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
+                                viewModel.updateNumberingSettings { settings -> settings.copy(fontSize = clamped.toInt()) }
+                            } else if (it.trim().isBlank()) {
+                                viewModel.updateNumberingSettings { settings -> settings.copy(fontSize = 1) }
                             }
                         },
                     )
@@ -322,28 +351,26 @@ fun OutputParameterSections(modifier: Modifier) {
                         Input(
                             modifier = Modifier.weight(1f),
                             label = "X",
-                            text = x.value,
+                            text = numberingSettings?.x?.toString() ?: "0",
                             onValueChange = {
                                 val value = it.toBigDecimalOrNull()
                                 if (value != null) {
-                                    x.value = value.toInt().toString()
-                                }
-                                if (it.trim().isBlank()) {
-                                    x.value = "0"
+                                    viewModel.updateNumberingSettings { settings -> settings.copy(x = value.toInt()) }
+                                } else if (it.trim().isBlank()) {
+                                    viewModel.updateNumberingSettings { settings -> settings.copy(x = 0) }
                                 }
                             },
                         )
                         Input(
                             modifier = Modifier.weight(1f),
                             label = "Y",
-                            text = y.value,
+                            text = numberingSettings?.y?.toString() ?: "0",
                             onValueChange = {
                                 val value = it.toBigDecimalOrNull()
                                 if (value != null) {
-                                    y.value = value.toInt().toString()
-                                }
-                                if (it.trim().isBlank()) {
-                                    x.value = "0"
+                                    viewModel.updateNumberingSettings { settings -> settings.copy(y = value.toInt()) }
+                                } else if (it.trim().isBlank()) {
+                                    viewModel.updateNumberingSettings { settings -> settings.copy(y = 0) }
                                 }
                             },
                         )
@@ -362,7 +389,7 @@ fun CardWrapper(
 ) {
     val appTheme: AppTheme = koinInject()
     val border = RoundedCornerShape(8.dp)
-    val expanded = remember { mutableStateOf(false) }
+    val expanded = remember { mutableStateOf(true) }
     Box(
         modifier =
             modifier

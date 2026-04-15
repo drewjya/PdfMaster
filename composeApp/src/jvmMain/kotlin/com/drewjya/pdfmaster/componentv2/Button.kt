@@ -110,8 +110,7 @@ fun VersionButton() {
     val currentVersion = updater.currentVersion
 
     val isClickable =
-        state is UpdateState.Idle || state is UpdateState.UpToDate ||
-            state is UpdateState.Error || state is UpdateState.UpdateAvailable
+        state is UpdateState.Idle || state is UpdateState.Error || state is UpdateState.UpdateAvailable
 
     val chipColor =
         when (state) {
@@ -152,6 +151,7 @@ fun VersionButton() {
     ) {
         when (val s = state) {
             is UpdateState.Idle, is UpdateState.UpToDate -> {
+                val isLatest = (s == UpdateState.UpToDate)
                 Icon(
                     imageVector = AppIcon.Download, // or your version/info icon
                     contentDescription = null,
@@ -159,7 +159,7 @@ fun VersionButton() {
                     tint = contentColor,
                 )
                 Text(
-                    text = "v$currentVersion",
+                    text = "v$currentVersion${if (isLatest) " (latest)" else ""}",
                     style = appTheme.typography.labelSmall,
                     color = contentColor,
                 )

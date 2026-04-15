@@ -3,17 +3,23 @@ package com.drewjya.pdfmaster.di
 import com.drewjya.pdfmaster.data.AppPreferences
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.PrimaryAppTheme
+import com.drewjya.pdfmaster.helper.ConfigManager
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.updater.DesktopAssetDownloader
 import com.drewjya.pdfmaster.updater.DesktopAssetInstaller
 import com.drewjya.pdfmaster.updater.GitHubUpdateSource
+import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val appModule =
     module {
         single { AppPreferences() }
         single { PdfViewModel(get()) }
+
+        single { ConfigManager() }
+        viewModelOf(::ConfigViewModel)
 
         single {
             AppUpdater(
@@ -22,7 +28,7 @@ val appModule =
                         owner = "drewjya",
                         repo = "pdfmaster",
                     ),
-                currentVersion = "1.0.4",
+                currentVersion = "1.1.7",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
                         name.endsWith(".exe") ||
