@@ -34,22 +34,21 @@ import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.milliseconds
 
-enum class MessageType(val color: Color) {
+enum class MessageType(
+    val color: Color,
+) {
     Success(Color.Green),
-    Error(Color.Red)
+    Error(Color.Red),
 }
 
 data class SnackbarMessage(
     val type: MessageType,
     val title: String,
-    val message: String
+    val message: String,
 )
 
 @Composable
-fun AppSnackbar(
-    modifier: Modifier = Modifier
-) {
-
+fun AppSnackbar(modifier: Modifier = Modifier) {
     val pdfViewModel: PdfViewModel = koinInject()
 
     val message by pdfViewModel.snackbarMessage
@@ -64,43 +63,42 @@ fun AppSnackbar(
         visible = message != null,
         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
         exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-        modifier = modifier
+        modifier = modifier,
     ) {
         message?.let {
             Card(
                 shape = RoundedCornerShape(8.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .widthIn(min = 250.dp, max = 400.dp)
+                modifier =
+                    Modifier
+                        .padding(16.dp)
+                        .widthIn(min = 250.dp, max = 400.dp),
             ) {
-
                 Row(
-                    modifier = Modifier.background(Color.White).height(IntrinsicSize.Min).fillMaxWidth()
+                    modifier = Modifier.background(Color.White).height(IntrinsicSize.Min).fillMaxWidth(),
                 ) {
-
                     Box(
-                        modifier = Modifier
-                            .width(6.dp)
-                            .fillMaxHeight()
-                            .background(it.type.color)
+                        modifier =
+                            Modifier
+                                .width(6.dp)
+                                .fillMaxHeight()
+                                .background(it.type.color),
                     )
 
-
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
                     ) {
                         Text(
                             text = it.title,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = it.type.color
+                            color = it.type.color,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = it.message,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.DarkGray
+                            color = Color.DarkGray,
                         )
                     }
                 }

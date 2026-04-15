@@ -33,18 +33,15 @@ import org.koin.compose.koinInject
 
 @Composable
 fun UpdaterComponent() {
-
     val updater: AppUpdater = koinInject()
-
 
     val state by updater.state.collectAsState()
     val scope = rememberCoroutineScope()
     val currentVersion = updater.currentVersion
 
-
     Column(
         modifier = Modifier.padding(16.dp).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = "Current: v$currentVersion",
@@ -59,7 +56,7 @@ fun UpdaterComponent() {
             is UpdateState.Checking -> {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     LinearProgressIndicator(modifier = Modifier.weight(1f))
                     Text("Checking...", style = MaterialTheme.typography.bodySmall)
@@ -72,35 +69,29 @@ fun UpdaterComponent() {
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            RoundedCornerShape(8.dp)
-                        )
-                        .clickable(
-                            onClick = { scope.launch { updater.downloadUpdate() } },
-                        )
-                        .background(AppColor.PRIMARY)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(
+                                RoundedCornerShape(8.dp),
+                            ).clickable(
+                                onClick = { scope.launch { updater.downloadUpdate() } },
+                            ).background(AppColor.PRIMARY)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-
+                    horizontalArrangement = Arrangement.Center,
                 ) {
-
                     Icon(
                         imageVector = AppIcon.Download,
                         contentDescription = "Download",
                         modifier = Modifier.size((MaterialTheme.typography.bodySmall.fontSize.value * 1.5).dp),
                         tint = Color.White,
-
-                        )
+                    )
                     Text(
                         formatSize(s.asset.size),
                         fontSize = MaterialTheme.typography.bodySmall.fontSize,
                         color = Color.White,
                     )
-
                 }
             }
 
@@ -108,7 +99,7 @@ fun UpdaterComponent() {
                 Text(
                     text = "You're up to date!",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
@@ -125,12 +116,12 @@ fun UpdaterComponent() {
                 Text(
                     text = "Download complete! Ready to install.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Button(
                     onClick = { updater.installUpdate() },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
                 ) {
                     Text("Install Update")
                 }
@@ -140,7 +131,7 @@ fun UpdaterComponent() {
                 Text(
                     text = s.message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         }
@@ -149,23 +140,20 @@ fun UpdaterComponent() {
             OutlinedButton(
                 onClick = { scope.launch { updater.checkForUpdate() } },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
             ) {
                 Text("Check for Updates")
             }
         }
     }
-
 }
 
-private fun formatSize(bytes: Long): String {
-    return when {
+private fun formatSize(bytes: Long): String =
+    when {
         bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
         bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
         else -> "$bytes B"
     }
-}
-
 
 /**
  * A progress indicator that shows download progress with percentage and byte counts.
@@ -179,7 +167,7 @@ fun DownloadProgressIndicator(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         LinearProgressIndicator(
             progress = { progress.coerceIn(0f, 1f) },
@@ -187,28 +175,27 @@ fun DownloadProgressIndicator(
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
                 text = "${(progress * 100).toInt()}%",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (totalBytes > 0) {
                 Text(
                     text = "${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
 }
 
-private fun formatBytes(bytes: Long): String {
-    return when {
+private fun formatBytes(bytes: Long): String =
+    when {
         bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
         bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
         else -> "$bytes B"
     }
-}

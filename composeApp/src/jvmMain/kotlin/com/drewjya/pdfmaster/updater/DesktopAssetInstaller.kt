@@ -4,7 +4,6 @@ import java.awt.Desktop
 import java.io.File
 
 class DesktopAssetInstaller : AssetInstaller {
-
     override fun install(filePath: String) {
         val file = File(filePath)
         require(file.exists()) { "File does not exist: $filePath" }

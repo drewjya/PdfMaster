@@ -15,4 +15,3 @@ interface AssetDownloader {
         onProgress: (bytesDownloaded: Long, totalBytes: Long) -> Unit,
     ): String
 }
-

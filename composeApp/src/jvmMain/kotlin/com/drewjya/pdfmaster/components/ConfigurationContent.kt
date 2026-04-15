@@ -91,14 +91,13 @@ fun ConfigurationContent(
                             pdfViewModel.setDirectory(directory.path)
                         }
                     } else {
-
-                        pdfViewModel.snackbarMessage.value = SnackbarMessage(
-                            type = MessageType.Error,
-                            title = "Permission Denied",
-                            message = "Cannot write to ${directory.path}",
-                        )
+                        pdfViewModel.snackbarMessage.value =
+                            SnackbarMessage(
+                                type = MessageType.Error,
+                                title = "Permission Denied",
+                                message = "Cannot write to ${directory.path}",
+                            )
                     }
-
                 }
             },
         )
@@ -182,14 +181,14 @@ fun ConfigurationContent(
                         label = "SIZE",
                         text =
                             (
-                                    if (screen ==
-                                        Screen.Watermark
-                                    ) {
-                                        pdfViewModel.watermarkFontSize.value
-                                    } else {
-                                        pdfViewModel.numberingFontSize.value
-                                    }
-                                    ).toString(),
+                                if (screen ==
+                                    Screen.Watermark
+                                ) {
+                                    pdfViewModel.watermarkFontSize.value
+                                } else {
+                                    pdfViewModel.numberingFontSize.value
+                                }
+                            ).toString(),
                         onValueChange = { text ->
                             val state =
                                 (if (screen == Screen.Watermark) pdfViewModel.watermarkFontSize else pdfViewModel.numberingFontSize)
@@ -351,14 +350,14 @@ fun ConfigurationContent(
                             label = "SIZE",
                             text =
                                 (
-                                        if (screen ==
-                                            Screen.Watermark
-                                        ) {
-                                            pdfViewModel.watermarkFontSize.value
-                                        } else {
-                                            pdfViewModel.numberingFontSize.value
-                                        }
-                                        ).toString(),
+                                    if (screen ==
+                                        Screen.Watermark
+                                    ) {
+                                        pdfViewModel.watermarkFontSize.value
+                                    } else {
+                                        pdfViewModel.numberingFontSize.value
+                                    }
+                                ).toString(),
                             onValueChange = { text ->
                                 val state =
                                     (if (screen == Screen.Watermark) pdfViewModel.watermarkFontSize else pdfViewModel.numberingFontSize)

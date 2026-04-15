@@ -39,16 +39,16 @@ class AppUpdater(
     suspend fun checkForUpdate(): ReleaseInfo? {
         _state.value = UpdateState.Checking
         return try {
-
-            val release = source.fetchReleases().run {
-                val isUpdate = this.assets.any { assetMatcher(it.name) } && VersionComparator.isNewerVersion(
-                    currentVersion,
-                    this.version
-                )
-                if (isUpdate) this else null
-
-            }
-            
+            val release =
+                source.fetchReleases().run {
+                    val isUpdate =
+                        this.assets.any { assetMatcher(it.name) } &&
+                            VersionComparator.isNewerVersion(
+                                currentVersion,
+                                this.version,
+                            )
+                    if (isUpdate) this else null
+                }
 
             if (release != null) {
                 val asset = release.assets.first { assetMatcher(it.name) }
@@ -76,14 +76,15 @@ class AppUpdater(
         val asset = currentState.asset
         return try {
             _state.value = UpdateState.Downloading(0f, 0, asset.size)
-            val filePath = downloader.download(
-                url = asset.downloadUrl,
-                fileName = asset.name,
-                onProgress = { downloaded, total ->
-                    val progress = if (total > 0) downloaded.toFloat() / total else 0f
-                    _state.value = UpdateState.Downloading(progress, downloaded, total)
-                },
-            )
+            val filePath =
+                downloader.download(
+                    url = asset.downloadUrl,
+                    fileName = asset.name,
+                    onProgress = { downloaded, total ->
+                        val progress = if (total > 0) downloaded.toFloat() / total else 0f
+                        _state.value = UpdateState.Downloading(progress, downloaded, total)
+                    },
+                )
             _state.value = UpdateState.ReadyToInstall(filePath)
             filePath
         } catch (e: Exception) {

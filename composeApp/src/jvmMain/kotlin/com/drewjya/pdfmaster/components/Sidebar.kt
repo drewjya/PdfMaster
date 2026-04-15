@@ -85,7 +85,7 @@ fun Sidebar(
                             Image(
                                 painter = painterResource(Res.drawable.icon),
                                 contentDescription = "Descriptive text",
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier.size(42.dp),
                             )
 
                             Text(
@@ -134,8 +134,6 @@ fun Sidebar(
                     UpdaterComponent()
                 }
             }
-
-
         }
     }
 }

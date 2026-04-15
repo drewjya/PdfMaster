@@ -26,8 +26,8 @@ import com.drewjya.pdfmaster.helper.PdfConfig
 import com.drewjya.pdfmaster.helper.PdfProcessor
 import com.drewjya.pdfmaster.helper.ProcessType
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import java.io.File
 import org.koin.compose.koinInject
+import java.io.File
 
 private val Slate900 = Color(0xFF0F172A)
 
@@ -94,65 +94,66 @@ fun HeaderContent(
             }
             Button(
                 onClick = {
-                    pdfViewModel.snackbarMessage.value = when (screen) {
-                        Screen.Merge -> {
-                            PdfProcessor.mergePdfs(
-                                pdfViewModel.pdfFiles.value,
-                                outputDirectoryPath = pdfViewModel.selectedDirectory.value,
-                                outputFileName = pdfViewModel.selectedName.value,
-                            )
-                        }
+                    pdfViewModel.snackbarMessage.value =
+                        when (screen) {
+                            Screen.Merge -> {
+                                PdfProcessor.mergePdfs(
+                                    pdfViewModel.pdfFiles.value,
+                                    outputDirectoryPath = pdfViewModel.selectedDirectory.value,
+                                    outputFileName = pdfViewModel.selectedName.value,
+                                )
+                            }
 
-                        Screen.Watermark -> {
-                            PdfProcessor.batchProcess(
-                                pdfViewModel.pdfFiles.value,
-                                outputDirectoryPath = pdfViewModel.selectedDirectory.value,
-                                config =
-                                    PdfConfig(
-                                        type = ProcessType.Watermark,
-                                        watermarkText = pdfViewModel.watermarkText.value,
-                                        watermarkFontSize = pdfViewModel.watermarkFontSize.value,
-                                        color = pdfViewModel.color.value,
-                                        rotation = pdfViewModel.rotation.value,
-                                        font = pdfViewModel.font.value,
-                                        position = pdfViewModel.position.value,
-                                        opacity = pdfViewModel.opacity.value,
-                                    ),
-                            )
-                        }
+                            Screen.Watermark -> {
+                                PdfProcessor.batchProcess(
+                                    pdfViewModel.pdfFiles.value,
+                                    outputDirectoryPath = pdfViewModel.selectedDirectory.value,
+                                    config =
+                                        PdfConfig(
+                                            type = ProcessType.All,
+                                            watermarkText = pdfViewModel.watermarkText.value,
+                                            watermarkFontSize = pdfViewModel.watermarkFontSize.value,
+                                            color = pdfViewModel.color.value,
+                                            rotation = pdfViewModel.rotation.value,
+                                            font = pdfViewModel.font.value,
+                                            position = pdfViewModel.position.value,
+                                            opacity = pdfViewModel.opacity.value,
+                                        ),
+                                )
+                            }
 
-                        Screen.Numbering -> {
-                            PdfProcessor.batchProcess(
-                                pdfViewModel.pdfFiles.value,
-                                outputDirectoryPath = pdfViewModel.selectedDirectory.value,
-                                config =
-                                    PdfConfig(
-                                        type = ProcessType.Numbering,
-                                        color = pdfViewModel.color.value,
-                                        rotation = pdfViewModel.rotation.value,
-                                        font = pdfViewModel.font.value,
-                                        position = pdfViewModel.position.value,
-                                        opacity = pdfViewModel.opacity.value,
-                                        numberingFontSize = pdfViewModel.numberingFontSize.value,
-                                        pageFormat = pdfViewModel.pageFormat.value,
-                                        numberPosition =
-                                            NumberPosition(
-                                                x = pdfViewModel.x.value.toInt(),
-                                                y = pdfViewModel.y.value.toInt(),
-                                            ),
-                                    ),
-                            )
-                        }
+                            Screen.Numbering -> {
+                                PdfProcessor.batchProcess(
+                                    pdfViewModel.pdfFiles.value,
+                                    outputDirectoryPath = pdfViewModel.selectedDirectory.value,
+                                    config =
+                                        PdfConfig(
+                                            type = ProcessType.Numbering,
+                                            color = pdfViewModel.color.value,
+                                            rotation = pdfViewModel.rotation.value,
+                                            font = pdfViewModel.font.value,
+                                            position = pdfViewModel.position.value,
+                                            opacity = pdfViewModel.opacity.value,
+                                            numberingFontSize = pdfViewModel.numberingFontSize.value,
+                                            pageFormat = pdfViewModel.pageFormat.value,
+                                            numberPosition =
+                                                NumberPosition(
+                                                    x = pdfViewModel.x.value.toInt(),
+                                                    y = pdfViewModel.y.value.toInt(),
+                                                ),
+                                        ),
+                                )
+                            }
 
-                        Screen.Files -> {
-                            PdfProcessor.batchMergePdfs(
-                                pdfViewModel.pdfFiles.value,
-                                outputDirectoryPath = pdfViewModel.monthlyDirectory.value,
-                                selectedDate = pdfViewModel.selectedDate.value,
-                                pattern = pdfViewModel.dateFormat.value,
-                            )
+                            Screen.Files -> {
+                                PdfProcessor.batchMergePdfs(
+                                    pdfViewModel.pdfFiles.value,
+                                    outputDirectoryPath = pdfViewModel.monthlyDirectory.value,
+                                    selectedDate = pdfViewModel.selectedDate.value,
+                                    pattern = pdfViewModel.dateFormat.value,
+                                )
+                            }
                         }
-                    }
                 },
                 colors =
                     ButtonDefaults.buttonColors(

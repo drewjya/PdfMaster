@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.helper.DatePattern
 import com.drewjya.pdfmaster.helper.PageFormat
 import com.drewjya.pdfmaster.helper.Position
-import java.util.prefs.Preferences
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
+import java.util.prefs.Preferences
 import kotlin.time.Clock
 
 class AppPreferences {

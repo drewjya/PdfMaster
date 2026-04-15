@@ -1,6 +1,8 @@
 package com.drewjya.pdfmaster.di
 
 import com.drewjya.pdfmaster.data.AppPreferences
+import com.drewjya.pdfmaster.design.AppTheme
+import com.drewjya.pdfmaster.design.PrimaryAppTheme
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.updater.DesktopAssetDownloader
 import com.drewjya.pdfmaster.updater.DesktopAssetInstaller
@@ -15,22 +17,27 @@ val appModule =
 
         single {
             AppUpdater(
-                source = GitHubUpdateSource(
-                    owner = "drewjya",
-                    repo = "pdfmaster",
-                ),
-                currentVersion = "1.0.6",
+                source =
+                    GitHubUpdateSource(
+                        owner = "drewjya",
+                        repo = "pdfmaster",
+                    ),
+                currentVersion = "1.0.4",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
-                            name.endsWith(".exe") ||
-                            name.endsWith(".dmg") ||
-                            name.endsWith(".AppImage") ||
-                            name.endsWith(".deb") ||
-                            name.endsWith(".rpm") ||
-                            name.endsWith(".jar")
+                        name.endsWith(".exe") ||
+                        name.endsWith(".dmg") ||
+                        name.endsWith(".AppImage") ||
+                        name.endsWith(".deb") ||
+                        name.endsWith(".rpm") ||
+                        name.endsWith(".jar")
                 },
                 downloader = DesktopAssetDownloader(),
                 installer = DesktopAssetInstaller(),
             )
+        }
+
+        single<AppTheme> {
+            PrimaryAppTheme()
         }
     }

@@ -2,6 +2,7 @@ package com.drewjya.pdfmaster
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.drewjya.pdfmaster.componentv2.App
 import com.drewjya.pdfmaster.di.appModule
 import io.github.vinceglb.filekit.FileKit
 import org.koin.core.context.GlobalContext.startKoin

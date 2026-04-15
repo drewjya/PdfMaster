@@ -3,9 +3,6 @@ package com.drewjya.pdfmaster.helper
 import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.components.MessageType
 import com.drewjya.pdfmaster.components.SnackbarMessage
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -14,6 +11,9 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
 import org.apache.pdfbox.util.Matrix
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -77,8 +77,9 @@ object PdfProcessor {
             return null
         } catch (e: Exception) {
             return SnackbarMessage(
-                MessageType.Error, "Failed to create directory",
-                "Failed to create directory: ${e.message}"
+                MessageType.Error,
+                "Failed to create directory",
+                "Failed to create directory: ${e.message}",
             )
         }
     }
@@ -125,7 +126,7 @@ object PdfProcessor {
         return SnackbarMessage(
             MessageType.Success,
             "Merge Success",
-            "Successfully merged PDFs to ${outputDirectory.absolutePath}"
+            "Successfully merged PDFs to ${outputDirectory.absolutePath}",
         )
     }
 
@@ -171,7 +172,7 @@ object PdfProcessor {
         return SnackbarMessage(
             MessageType.Success,
             "Merge Success",
-            "Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}"
+            "Successfully merged ${sourceFiles.size} PDFs into ${destinationFile.absolutePath}",
         )
     }
 
@@ -199,7 +200,6 @@ object PdfProcessor {
                 success += 1
             } catch (e: Exception) {
                 failed = "Failed to process ${inputFile.name}: ${e.message}"
-
             }
         }
 
@@ -223,63 +223,76 @@ object PdfProcessor {
             for (index in targetPages) {
                 val page = document.getPage(index)
 
-                // 1. Open ONE stream for all operations on this page
-                // AppendMode.APPEND = Keep original content
-                // compress = true
-                // resetContext = true (This is CRITICAL to prevent state bleeding)
+                val rotation = page.rotation
+
+                // Get actual visible dimensions
+                val pageSize = page.mediaBox
+                val actualWidth = if (rotation == 90 || rotation == 270) pageSize.height else pageSize.width
+                val actualHeight = if (rotation == 90 || rotation == 270) pageSize.width else pageSize.height
+
                 PDPageContentStream(
                     document,
                     page,
                     PDPageContentStream.AppendMode.APPEND,
                     true,
-                    false
+                    true, // Set resetContext to true to prevent state bleeding
                 ).use { contentStream ->
+
+                    // Explicit matrices for mapping the visual coordinate system
+                    if (rotation != 0) {
+                        when (rotation) {
+                            90 -> contentStream.transform(Matrix(0f, 1f, -1f, 0f, pageSize.width, 0f))
+                            180 -> contentStream.transform(Matrix(-1f, 0f, 0f, -1f, pageSize.width, pageSize.height))
+                            270 -> contentStream.transform(Matrix(0f, -1f, 1f, 0f, 0f, pageSize.height))
+                        }
+                    }
 
                     // --- WATERMARK SECTION ---
                     if (config.type != ProcessType.Numbering && config.watermarkText.isNotBlank()) {
-                        contentStream.saveGraphicsState() // Isolate watermark state
+                        contentStream.saveGraphicsState()
 
-                        val gs = PDExtendedGraphicsState().apply {
-                            nonStrokingAlphaConstant = config.opacity
-                            strokingAlphaConstant = config.opacity
-                        }
+                        val gs =
+                            PDExtendedGraphicsState().apply {
+                                nonStrokingAlphaConstant = config.opacity
+                                strokingAlphaConstant = config.opacity
+                            }
                         contentStream.setGraphicsStateParameters(gs)
                         contentStream.setNonStrokingColor(config.color.red, config.color.green, config.color.blue)
                         contentStream.setFont(fontType, config.watermarkFontSize.toFloat())
 
                         val textWidth = fontType.getStringWidth(config.watermarkText) / 1000f * config.watermarkFontSize
-                        val (anchorX, anchorY) = computeAnchor(
-                            page.mediaBox.width,
-                            page.mediaBox.height,
-                            textWidth,
-                            config
-                        )
+                        val (anchorX, anchorY) =
+                            computeAnchor(
+                                actualWidth, // Using normalized width
+                                actualHeight, // Using normalized height
+                                textWidth,
+                                config,
+                            )
 
-                        // Call a modified stampSingle that takes the existing stream
                         applyStampToStream(contentStream, anchorX, anchorY, config)
 
-                        contentStream.restoreGraphicsState() // Restore to clean state
+                        contentStream.restoreGraphicsState()
                     }
 
                     // --- NUMBERING SECTION ---
                     if (config.type != ProcessType.Watermark) {
-                        contentStream.saveGraphicsState() // Isolate numbering state
+                        contentStream.saveGraphicsState()
 
                         val numberingFontSize = config.numberingFontSize.toFloat()
                         contentStream.setFont(fontType, numberingFontSize)
                         contentStream.setNonStrokingColor(config.color.red, config.color.green, config.color.blue)
 
-                        val pageText = config.pageFormat.value
-                            .replace("{page}", "${index + 1}")
-                            .replace("{total}", "$totalPages")
+                        val pageText =
+                            config.pageFormat.value
+                                .replace("{page}", "${index + 1}")
+                                .replace("{total}", "$totalPages")
 
                         val textWidth = fontType.getStringWidth(pageText) / 1000f * numberingFontSize
                         val textHeight = fontType.fontDescriptor.capHeight / 1000f * numberingFontSize
 
-                        val x =
-                            page.mediaBox.width - (page.mediaBox.width * (config.numberPosition.x / 100f)) - textWidth
-                        val y =
-                            page.mediaBox.height - (page.mediaBox.height * (config.numberPosition.y / 100f)) - textHeight
+                        // FIXED: Use actualWidth and actualHeight here!
+                        val x = actualWidth - (actualWidth * (config.numberPosition.x / 100f)) - textWidth
+                        val y = actualHeight - (actualHeight * (config.numberPosition.y / 100f)) - textHeight
 
                         contentStream.beginText()
                         contentStream.setTextMatrix(Matrix.getTranslateInstance(x, y))
@@ -317,6 +330,7 @@ object PdfProcessor {
         val cosA = cos(radians).toFloat()
         val sinA = sin(radians).toFloat()
 
+        // This perfectly calculates the offset needed to center the bounding box of the rotated text
         val startOffsetX = -(hw * cosA - hh * sinA)
         val startOffsetY = -(hw * sinA + hh * cosA)
 
@@ -324,20 +338,18 @@ object PdfProcessor {
             when (config.position) {
                 Position.Center -> Pair(pageWidth / 2f, pageHeight / 2f)
 
-                Position.TopLeft -> Pair(margin, pageHeight - margin)
-
+                // Keep it simple!
                 Position.Top -> Pair(pageWidth / 2f, pageHeight - margin)
+
+                Position.TopLeft -> Pair(margin, pageHeight - margin)
 
                 Position.TopRight -> Pair(pageWidth - margin, pageHeight - margin)
 
-                //            Position.MIDDLE_LEFT   -> Pair(margin,                  pageHeight / 2f)
-//            Position.MIDDLE_RIGHT  -> Pair(pageWidth - margin,      pageHeight / 2f)
                 Position.BottomLeft -> Pair(margin, margin)
 
                 Position.Bottom -> Pair(pageWidth / 2f, margin)
 
                 Position.BottomRight -> Pair(pageWidth - margin, margin)
-//            WatermarkPosition.CUSTOM        -> Pair(config.customX,          config.customY)
             }
 
         return Pair(cx + startOffsetX, cy + startOffsetY)

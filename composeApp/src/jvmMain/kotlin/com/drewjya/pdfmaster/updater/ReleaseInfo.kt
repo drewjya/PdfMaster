@@ -36,16 +36,18 @@ data class ReleaseAsset(
     val size: Long,
 )
 
-internal fun GitHubRelease.toReleaseInfo(): ReleaseInfo = ReleaseInfo(
-    tagName = tagName,
-    version = tagName.removePrefix("v"),
-    changelog = body ?: "No changelog available",
-    publishedAt = publishedAt ?: "",
-    assets = assets.map { it.toReleaseAsset() },
-)
+internal fun GitHubRelease.toReleaseInfo(): ReleaseInfo =
+    ReleaseInfo(
+        tagName = tagName,
+        version = tagName.removePrefix("v"),
+        changelog = body ?: "No changelog available",
+        publishedAt = publishedAt ?: "",
+        assets = assets.map { it.toReleaseAsset() },
+    )
 
-internal fun GitHubAsset.toReleaseAsset(): ReleaseAsset = ReleaseAsset(
-    name = name,
-    downloadUrl = browserDownloadUrl,
-    size = size,
-)
+internal fun GitHubAsset.toReleaseAsset(): ReleaseAsset =
+    ReleaseAsset(
+        name = name,
+        downloadUrl = browserDownloadUrl,
+        size = size,
+    )
