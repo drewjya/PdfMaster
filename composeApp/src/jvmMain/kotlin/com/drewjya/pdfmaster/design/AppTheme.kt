@@ -7,6 +7,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
+val ERROR = Color(0xFFBA1A1A)
+val SUCCESS = Color(0xFF10B981)
+
 interface AppTheme {
     val primary: Color
     val primaryHover: Color
@@ -32,7 +35,7 @@ class PrimaryAppTheme(
     override val surfaceAlt: Color = Color(0xFFF4F1F0),
     override val onSurface: Color = Color(0xFF1C1B1F),
     override val onSurfaceMuted: Color = Color(0xFF79747E),
-    override val error: Color = Color(0xFFBA1A1A),
+    override val error: Color = ERROR,
     override val subtleBorder: Color = Color.Black.copy(alpha = 0.05f),
     override val typography: Typography =
         Typography(

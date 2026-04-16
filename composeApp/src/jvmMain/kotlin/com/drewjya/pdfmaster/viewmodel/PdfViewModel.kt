@@ -2,12 +2,18 @@ package com.drewjya.pdfmaster.viewmodel
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.drewjya.pdfmaster.components.SnackbarMessage
+import com.drewjya.pdfmaster.helper.OutputConfiguration
+import com.drewjya.pdfmaster.helper.PdfUtils
 import com.drewjya.pdfmaster.helper.getAvailableFonts
 import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PdfViewModel : ViewModel() {
     private val _pdfFiles = MutableStateFlow<List<File>>(emptyList())
@@ -59,5 +65,16 @@ class PdfViewModel : ViewModel() {
         }
     }
 
+    val isProcessing = MutableStateFlow(false)
 
+    fun processFiles(files: List<File>, configuration: OutputConfiguration) {
+        viewModelScope.launch {
+            isProcessing.value = true
+            val result = withContext(Dispatchers.IO) {
+                PdfUtils.processFiles(files, configuration)
+            }
+            snackbarMessage.value = result
+            isProcessing.value = false
+        }
+    }
 }

@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
-import com.drewjya.pdfmaster.helper.PdfUtils
 import com.drewjya.pdfmaster.hooks.rememberAppInput
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
@@ -40,6 +43,8 @@ fun Footer(
     viewModel: ConfigViewModel = koinViewModel(),
     pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
+    val isProcessing by pdfViewModel.isProcessing.collectAsStateWithLifecycle(false)
+
     val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
     val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
 
@@ -98,10 +103,13 @@ fun Footer(
         ) {
             Button(
                 onClick = {
-                    pdfViewModel.snackbarMessage.value =
-                        PdfUtils.processFiles(files = files, configuration = activeConfig ?: return@Button)
+                    pdfViewModel.processFiles(
+                        files = files,
+                        configuration = activeConfig ?: return@Button
+                    )
+
                 },
-                enabled = fileCount > 0,
+                enabled = fileCount > 0 && !isProcessing,
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = appTheme.primary,
@@ -110,12 +118,27 @@ fun Footer(
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             ) {
-                Text(
-                    "Execute Compile" + if (fileCount > 0) " ($fileCount)" else "",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp,
-                    lineHeight = 12.sp,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (isProcessing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        if (isProcessing) "Comipling"
+                        else "Execute Compile" + if (fileCount > 0) " ($fileCount)" else "",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp,
+                        lineHeight = 12.sp,
+                        color = Color.White,
+                    )
+                }
+
             }
         }
     }

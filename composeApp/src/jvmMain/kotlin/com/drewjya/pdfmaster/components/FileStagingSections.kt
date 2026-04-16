@@ -60,10 +60,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 import java.io.File
 import java.math.BigDecimal
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -401,6 +401,12 @@ fun PaginationSystem(
     totalPages: Int = 1,
 ) {
     val appTheme = koinInject<AppTheme>()
+
+    // Calculate the sliding window of pages to display (Max 3 pages)
+    val startPage = maxOf(1, minOf(currentPage - 1, totalPages - 2))
+    val endPage = minOf(totalPages, maxOf(currentPage + 1, 2))
+    val visiblePages = (startPage..endPage).toList()
+
     Row(
         modifier =
             Modifier
@@ -422,6 +428,7 @@ fun PaginationSystem(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Previous Button
             item {
                 PaginationComponent(
                     modifier = Modifier.border(1.dp, appTheme.onSurfaceMuted.copy(alpha = 0.2f), CircleShape),
@@ -441,20 +448,83 @@ fun PaginationSystem(
                 }
             }
 
-            items(totalPages) { index ->
-                val isActive = currentPage == index + 1
+            // Render First Page + Ellipsis if Page 1 is out of the sliding window
+            if (startPage > 1) {
+                item {
+                    PaginationComponent(
+                        onClick = { onPageChange(1) },
+                        color = Color.Transparent,
+                    ) {
+                        Text(
+                            "1",
+                            color = appTheme.onSurface,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                if (startPage > 2) {
+                    item {
+                        Text(
+                            text = "..",
+                            color = appTheme.onSurfaceMuted,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(0.dp)
+                        )
+                    }
+                }
+            }
+
+            // Render Sliding Window
+            items(visiblePages.size) { index ->
+                val page = visiblePages[index]
+                val isActive = currentPage == page
+
                 PaginationComponent(
-                    onClick = { onPageChange(index + 1) },
+                    onClick = { onPageChange(page) },
                     color = if (isActive) appTheme.primary else Color.Transparent,
                 ) {
                     Text(
-                        "${index + 1}",
+                        "$page",
                         color = if (isActive) Color.White else appTheme.onSurface,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
             }
+
+            // Render Ellipsis + Last Page if totalPages is out of the sliding window
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    item {
+
+                        Text(
+                            text = "..",
+                            color = appTheme.onSurfaceMuted,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(0.dp)
+                        )
+
+                    }
+                }
+                item {
+                    PaginationComponent(
+                        onClick = { onPageChange(totalPages) },
+                        color = Color.Transparent,
+                    ) {
+                        Text(
+                            "$totalPages",
+                            color = appTheme.onSurface,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+
+            // Next Button
             item {
                 PaginationComponent(
                     modifier = Modifier.border(1.dp, appTheme.onSurfaceMuted.copy(alpha = 0.2f), CircleShape),
