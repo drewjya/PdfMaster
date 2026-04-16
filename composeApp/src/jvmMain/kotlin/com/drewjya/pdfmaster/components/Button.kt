@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.updater.UpdateState
+import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -104,13 +106,25 @@ fun BadgeButton(
 }
 
 @Composable
-fun VersionButton() {
-    val updater: AppUpdater = koinInject()
-    val appTheme: AppTheme = koinInject()
+fun VersionButton(
+    updater: AppUpdater = koinInject(),
+    appTheme: AppTheme = koinInject(),
+    pdfViewModel: PdfViewModel = koinInject(),
+) {
+
     val state by updater.state.collectAsState()
     val scope = rememberCoroutineScope()
     val currentVersion = updater.currentVersion
 
+    LaunchedEffect(state) {
+        if (state is UpdateState.Error) {
+            pdfViewModel.snackbarMessage.value = SnackbarMessage(
+                type = MessageType.Error,
+                title = "Update Failed",
+                message = (state as UpdateState.Error).message,
+            )
+        }
+    }
     val isClickable =
         state is UpdateState.Idle || state is UpdateState.Error || state is UpdateState.UpdateAvailable
 
