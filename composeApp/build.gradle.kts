@@ -50,7 +50,11 @@ kotlin {
             implementation(libs.slf4j.simple)
             implementation(libs.jcl.over.slf4j)
 
-            implementation("com.github.librepdf:openpdf:2.0.3")
+            implementation("com.github.librepdf:openpdf:3.0.3")
+
+            // Add Bouncy Castle for OpenPDF cryptography/encryption support
+            implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+            implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
         }
 
         commonTest.dependencies {

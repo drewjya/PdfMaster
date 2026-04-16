@@ -1,10 +1,11 @@
 package com.drewjya.pdfmaster.helper
 
-import com.lowagie.text.FontFactory
+
 import io.github.vinceglb.filekit.utils.toPath
 import io.github.xxfast.kstore.KStore
 import io.github.xxfast.kstore.file.storeOf
 import java.io.File
+import org.openpdf.text.FontFactory
 
 class ConfigManager {
     private val appDir = System.getProperty("user.home") + "/.pdfmaster"

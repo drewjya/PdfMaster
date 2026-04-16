@@ -1,63 +1,143 @@
 package com.drewjya.pdfmaster.helper
 
-import com.lowagie.text.Document
-import com.lowagie.text.Element
-import com.lowagie.text.FontFactory
-import com.lowagie.text.pdf.BaseFont
-import com.lowagie.text.pdf.PdfCopy
-import com.lowagie.text.pdf.PdfGState
-import com.lowagie.text.pdf.PdfReader
-import com.lowagie.text.pdf.PdfStamper
+import com.drewjya.pdfmaster.components.MessageType
+import com.drewjya.pdfmaster.components.SnackbarMessage
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Date
+import org.openpdf.text.Document
+import org.openpdf.text.Element
+import org.openpdf.text.FontFactory
+import org.openpdf.text.pdf.BaseFont
+import org.openpdf.text.pdf.PdfCopy
+import org.openpdf.text.pdf.PdfGState
+import org.openpdf.text.pdf.PdfReader
+import org.openpdf.text.pdf.PdfStamper
 
 object PdfUtils {
     // ──────────────────────────────────────────────
 // Entry point
 // ──────────────────────────────────────────────
 
+    private fun handleDirectory(directory: File): SnackbarMessage? {
+        val directoryPath = directory.absolutePath
+
+        try {
+            Files.createDirectories(Paths.get(directoryPath))
+            return null
+        } catch (e: Exception) {
+            return SnackbarMessage(
+                MessageType.Error,
+                "Failed to create directory",
+                "Failed to create directory: ${e.message}",
+            )
+        }
+    }
+
     fun processFiles(
         files: List<File>,
         configuration: OutputConfiguration,
-    ) {
-        require(files.isNotEmpty()) { "File list must not be empty" }
+    ): SnackbarMessage? {
+        val outputDir = File(configuration.targetDirectory)
+        var message = handleDirectory(outputDir)
+        if (message != null) return message
 
-        val outputDir = File(configuration.targetDirectory).also { it.mkdirs() }
-
-        when (configuration.mode) {
+        message = when (configuration.mode) {
             ProcessMode.Merge -> {
-                val mergedBytes = mergeFiles(files)
-                val enhanced = applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
-                val outName =
-                    configuration.mergeSettings.mergeName
-                        .ifBlank { configuration.name }
-                        .ensurePdfExtension()
-                File(outputDir, outName).writeBytes(enhanced)
+                try {
+                    val mergedBytes = mergeFiles(files)
+                    val enhanced = applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
+                    val outName =
+                        configuration.mergeSettings.mergeName
+                            .ifBlank { configuration.name }
+                            .ensurePdfExtension()
+                    File(outputDir, outName).writeBytes(enhanced)
+                    null
+                } catch (e: Exception) {
+                    SnackbarMessage(
+                        MessageType.Error,
+                        "Failed to merge files",
+                        "Failed to merge files: ${e.message}",
+                    )
+                }
             }
 
             ProcessMode.Batch -> {
+                val batchConfig = configuration.batchSettings
                 val date =
-                    SimpleDateFormat(configuration.batchSettings.dateFormat.pattern)
-                        .format(Date(configuration.batchSettings.selectedDate))
+                    SimpleDateFormat(batchConfig.dateFormat.pattern)
+                        .format(Date(batchConfig.selectedDate))
 
-                files.forEach { file ->
-                    val bytes = file.readBytes()
-                    val enhanced = applyEnhancements(bytes, configuration, totalPages = countPages(bytes))
-                    val outName = "${date}_${file.nameWithoutExtension}.pdf"
-                    File(outputDir, outName).writeBytes(enhanced)
+                val groupedOutputDir = File(outputDir, date)
+                val msg = handleDirectory(groupedOutputDir)
+                if (msg != null) return msg
+
+                val groupedResult = files.groupBy { file ->
+                    file.name.split(" - ").first().trim()
                 }
+                val listPrefixOrder = batchConfig.listPrefixOrder
+                groupedResult.forEach { (name, files) ->
+                    val sortedList = files.sortedBy { file ->
+                        val priority = listPrefixOrder.indexOfFirst { prefix ->
+                            file.name.contains(prefix, ignoreCase = true)
+                        }
+                        if (priority == -1) listPrefixOrder.size else priority
+                    }
+
+                    try {
+                        val mergedBytes = mergeFiles(sortedList)
+                        val enhanced =
+                            applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
+                        val outName =
+                            batchConfig.format
+                                .replace("{identifier}", name)
+                                .replace("{date}", date)
+                                .replace("{variable}", batchConfig.variable)
+                                .ifBlank { "$name - $date" }.ensurePdfExtension()
+                        File(outputDir, outName).writeBytes(enhanced)
+                        null
+                    } catch (e: Exception) {
+                        return SnackbarMessage(
+                            MessageType.Error,
+                            "Failed to merge files",
+                            "Failed to merge files: ${e.message}",
+                        )
+                    }
+                }
+                null
+
             }
 
             ProcessMode.None -> {
-                files.forEach { file ->
-                    val bytes = file.readBytes()
-                    val enhanced = applyEnhancements(bytes, configuration, totalPages = countPages(bytes))
-                    File(outputDir, file.name.ensurePdfExtension()).writeBytes(enhanced)
+                if (configuration.activeEnhancements.isEmpty()) {
+                    SnackbarMessage(
+                        MessageType.Error,
+                        "No process selected",
+                        "Please select at least one process",
+                    )
+                } else {
+
+                    try {
+                        files.forEach { file ->
+                            val bytes = file.readBytes()
+                            val enhanced = applyEnhancements(bytes, configuration, totalPages = countPages(bytes))
+                            File(outputDir, file.name.ensurePdfExtension()).writeBytes(enhanced)
+                        }
+                        null
+                    } catch (e: Exception) {
+                        SnackbarMessage(
+                            MessageType.Error,
+                            "Failed to process files",
+                            "Failed to process files: ${e.message}",
+                        )
+                    }
                 }
             }
         }
+        return message
     }
 
 // ──────────────────────────────────────────────
@@ -71,6 +151,7 @@ object PdfUtils {
         document.open()
 
         files.forEach { file ->
+            println("Merging ${file.absolutePath}")
             val reader = PdfReader(file.absolutePath)
             for (i in 1..reader.numberOfPages) {
                 copy.addPage(copy.getImportedPage(reader, i))

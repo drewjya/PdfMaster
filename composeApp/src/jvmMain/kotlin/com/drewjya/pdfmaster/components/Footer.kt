@@ -97,7 +97,10 @@ fun Footer(
             contentAlignment = Alignment.CenterEnd,
         ) {
             Button(
-                onClick = { PdfUtils.processFiles(files = files, configuration = activeConfig ?: return@Button) },
+                onClick = {
+                    pdfViewModel.snackbarMessage.value =
+                        PdfUtils.processFiles(files = files, configuration = activeConfig ?: return@Button)
+                },
                 enabled = fileCount > 0,
                 colors =
                     ButtonDefaults.buttonColors(

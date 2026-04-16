@@ -1,9 +1,9 @@
 package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
-import com.lowagie.text.FontFactory
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import org.openpdf.text.FontFactory
 
 fun getAvailableFonts(): List<String> {
     FontFactory.registerDirectories()
@@ -65,6 +65,14 @@ enum class ProcessMode {
 data class BatchSettings(
     val dateFormat: DatePattern = DatePattern.Date,
     val selectedDate: Long = System.currentTimeMillis(),
+    val variable: String = "Statement",
+    val separator: String = " - ",
+    val format: String = "{identifier} - {variable} {date}.pdf",
+    val listPrefixOrder: List<String> = listOf(
+        "Portfolio Activity",
+        "2",
+        "Statement Position"
+    ),
 )
 
 @Serializable

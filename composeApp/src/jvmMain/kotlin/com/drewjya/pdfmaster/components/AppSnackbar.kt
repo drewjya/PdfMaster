@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.milliseconds
 
 enum class MessageType(
@@ -48,8 +48,11 @@ data class SnackbarMessage(
 )
 
 @Composable
-fun AppSnackbar(modifier: Modifier = Modifier) {
-    val pdfViewModel: PdfViewModel = koinInject()
+fun AppSnackbar(
+    modifier: Modifier = Modifier,
+    pdfViewModel: PdfViewModel = koinViewModel()
+) {
+
 
     val message by pdfViewModel.snackbarMessage
     LaunchedEffect(message) {
