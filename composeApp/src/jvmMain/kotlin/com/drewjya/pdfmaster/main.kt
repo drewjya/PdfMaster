@@ -2,7 +2,7 @@ package com.drewjya.pdfmaster
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.window.application
-import com.drewjya.pdfmaster.components.TitleBarView
+import com.drewjya.pdfmaster.components.Navbar
 import com.drewjya.pdfmaster.di.appModule
 import io.github.vinceglb.filekit.FileKit
 import java.awt.Dimension
@@ -57,7 +57,7 @@ fun main() {
 
                 Column {
 
-                    TitleBarView()
+                    Navbar()
 
                     App()
 

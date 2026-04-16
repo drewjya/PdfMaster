@@ -30,7 +30,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DecoratedWindowScope.TitleBarView(
+fun DecoratedWindowScope.Navbar(
     pdfViewModel: PdfViewModel = koinViewModel(),
     appTheme: AppTheme = koinInject()
 ) {
@@ -78,7 +78,7 @@ fun DecoratedWindowScope.TitleBarView(
         ),
     ) {
         Row(
-            Modifier.align(Alignment.Start),
+            Modifier.align(Alignment.Start).padding(start = 16.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             BadgeButton(
