@@ -11,7 +11,6 @@ import org.koin.compose.koinInject
 @Composable
 fun Root(appTheme: AppTheme = koinInject()) {
     Column(modifier = Modifier.fillMaxSize().background(appTheme.neutral)) {
-        Navbar()
         MainLayout(
             modifier = Modifier.weight(1f),
             staging = { modifier ->

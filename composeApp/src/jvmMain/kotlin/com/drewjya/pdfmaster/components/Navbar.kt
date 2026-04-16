@@ -1,9 +1,8 @@
 package com.drewjya.pdfmaster.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,13 +15,26 @@ import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.window.styling.defaults
+import org.jetbrains.jewel.intui.window.styling.lightWithLightHeader
+import org.jetbrains.jewel.window.DecoratedWindowScope
+import org.jetbrains.jewel.window.TitleBar
+import org.jetbrains.jewel.window.defaultTitleBarStyle
+import org.jetbrains.jewel.window.newFullscreenControls
+import org.jetbrains.jewel.window.styling.TitleBarColors
+import org.jetbrains.jewel.window.styling.TitleBarMetrics
+import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
-    val appTheme: AppTheme = koinInject()
-
+fun DecoratedWindowScope.TitleBarView(
+    pdfViewModel: PdfViewModel = koinViewModel(),
+    appTheme: AppTheme = koinInject()
+) {
+    val style = JewelTheme.defaultTitleBarStyle
     val pickerFiles =
         rememberFilePickerLauncher(
             type = FileKitType.File(extensions = setOf("pdf")),
@@ -48,17 +60,27 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
                 }
             },
         )
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(appTheme.neutral)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    TitleBar(
+        Modifier.newFullscreenControls(),
+        style = TitleBarStyle(
+            colors = TitleBarColors.lightWithLightHeader(
+                borderColor = appTheme.neutral,
+                backgroundColor = appTheme.neutral
+            ),
+            metrics = TitleBarMetrics.defaults(
+                height = 36.dp
+            ),
+            icons = style.icons,
+            dropdownStyle = style.dropdownStyle,
+            iconButtonStyle = style.iconButtonStyle,
+            paneButtonStyle = style.paneButtonStyle,
+            paneCloseButtonStyle = style.paneCloseButtonStyle
+        ),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(
+            Modifier.align(Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
             BadgeButton(
                 label = "Add Files",
                 icon = AppIcon.FileAdd,
@@ -79,6 +101,10 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
                 onClick = { pdfViewModel.clearFiles() },
             )
         }
-        VersionButton()
+
+
+        Row(Modifier.align(Alignment.End).padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            VersionButton()
+        }
     }
 }
