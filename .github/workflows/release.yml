@@ -3,7 +3,7 @@ name: Build and Release Desktop Apps
 on:
   push:
     tags:
-      - 'v*' # Triggers workflow on tags starting with 'v'
+      - 'v*'
 
 permissions:
   contents: write
@@ -21,6 +21,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'jetbrains'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -32,7 +34,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifact
-          # Updated to match your exact macOS directory
           path: '**/build/compose/binaries/main-release/dmg/*.dmg'
           retention-days: 1
 
@@ -48,6 +49,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'jetbrains'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -59,7 +62,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifact
-          # Updated to match your exact Windows directory
           path: '**/build/compose/binaries/main-release/msi/*.msi'
           retention-days: 1
 
