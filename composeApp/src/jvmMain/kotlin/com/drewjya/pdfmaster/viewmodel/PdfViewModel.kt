@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.data.AppPreferences
 import com.drewjya.pdfmaster.helper.getAvailableFonts
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.io.File
 
 class PdfViewModel(
     private val prefs: AppPreferences,

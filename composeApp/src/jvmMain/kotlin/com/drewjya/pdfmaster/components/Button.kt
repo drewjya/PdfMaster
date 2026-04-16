@@ -1,4 +1,4 @@
-package com.drewjya.pdfmaster.componentv2
+package com.drewjya.pdfmaster.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState

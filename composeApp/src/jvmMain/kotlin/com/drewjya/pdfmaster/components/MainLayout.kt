@@ -1,4 +1,4 @@
-package com.drewjya.pdfmaster.componentv2
+package com.drewjya.pdfmaster.components
 
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement

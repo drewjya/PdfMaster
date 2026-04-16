@@ -1,22 +1,18 @@
-package com.drewjya.pdfmaster.componentv2
+package com.drewjya.pdfmaster.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,8 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.drewjya.pdfmaster.components.MessageType
-import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.PdfUtils
@@ -41,42 +35,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun App() {
-    val appTheme = koinInject<AppTheme>()
-    MaterialTheme(
-        colorScheme =
-            lightColorScheme(
-                primary = appTheme.primary,
-                onPrimary = Color.White,
-                surface = appTheme.surface,
-                onSurface = appTheme.onSurface,
-                background = appTheme.neutral,
-                onBackground = appTheme.onSurface,
-            ),
-    ) {
-        Column(modifier = Modifier.fillMaxSize().background(appTheme.neutral)) {
-            Navbar()
-            MainLayout(
-                modifier = Modifier.weight(1f),
-                staging = { modifier ->
-                    FileStagingPane(modifier = modifier)
-                },
-                configuration = { modifier ->
-                    OutputParameterSections(modifier = modifier.fillMaxSize())
-                },
-            )
-
-            DockedFooter() // Now has space at the bottom because MainLayout uses weight(1f)
-        }
-    }
-}
-
-@Composable
-fun DockedFooter(
+fun Footer(
+    appTheme: AppTheme = koinInject(),
     viewModel: ConfigViewModel = koinViewModel(),
     pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
-    val appTheme: AppTheme = koinInject()
     val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
     val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
 

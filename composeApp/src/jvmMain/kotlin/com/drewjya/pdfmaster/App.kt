@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,15 +24,17 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.graphics.Color
 import com.drewjya.pdfmaster.components.AppSnackbar
-import com.drewjya.pdfmaster.components.MainContent
+import com.drewjya.pdfmaster.components.Root
+import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
+import java.awt.datatransfer.DataFlavor
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import java.awt.datatransfer.DataFlavor
-import java.io.File
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.hours
 
 private val Slate50 = Color(0xFFF8FAFC)
@@ -50,18 +53,20 @@ fun startBackgroundUpdateCheck(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun App() {
-    val updater: AppUpdater = koinInject()
+fun App(
+    updater: AppUpdater = koinInject(),
+    appTheme: AppTheme = koinInject(),
+    viewModel: PdfViewModel = koinViewModel(),
+) {
 
     val scope = rememberCoroutineScope()
-
     LaunchedEffect(Unit) {
         startBackgroundUpdateCheck(updater, scope)
     }
-    val viewModel: PdfViewModel = koinInject()
+
 
     var currentScreen by remember { mutableStateOf(Screen.Merge) }
-    var isExpanded by remember { mutableStateOf(true) }
+
 
     val dragAndDropTarget =
         remember {
@@ -87,19 +92,25 @@ fun App() {
                 }
             }
         }
-    MaterialTheme {
+    MaterialTheme(
+        colorScheme =
+            lightColorScheme(
+                primary = appTheme.primary,
+                onPrimary = Color.White,
+                surface = appTheme.surface,
+                onSurface = appTheme.onSurface,
+                background = appTheme.neutral,
+                onBackground = appTheme.onSurface,
+            ),
+    ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Row(
-                Modifier
-                    .fillMaxSize()
-                    .background(Slate50)
-                    .dragAndDropTarget(
-                        shouldStartDragAndDrop = { true },
-                        target = dragAndDropTarget,
-                    ),
-            ) {
-                MainContent(currentScreen)
-            }
+                modifier = Modifier.fillMaxSize().dragAndDropTarget(
+                    shouldStartDragAndDrop = { true },
+                    target = dragAndDropTarget
+                ),
+                content = { Root(appTheme) }
+            )
 
             if (viewModel.isDragging.value) {
                 Box(
@@ -107,7 +118,6 @@ fun App() {
                         Modifier
                             .fillMaxSize()
                             .background(Color.Black.copy(alpha = 0.4f)),
-                    // Dim the background
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
