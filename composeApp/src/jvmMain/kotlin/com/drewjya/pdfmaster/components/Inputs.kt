@@ -476,7 +476,7 @@ fun ColorPicker(
 ) {
     LaunchedEffect(Unit) {
         if (color != null) {
-            println("Setting color to $color")
+
             controller.selectByColor(color, true)
         }
     }

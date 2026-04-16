@@ -29,7 +29,6 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
             mode = FileKitMode.Multiple(),
             onResult = { files ->
                 if (files != null) {
-                    println("Selected files: ${files.map { it.file.name }}")
                     pdfViewModel.addFiles(files.map { it.file })
                 }
             },
@@ -38,7 +37,6 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
         rememberDirectoryPickerLauncher(
             onResult = { directory ->
                 if (directory != null) {
-                    println("${directory.file.listFiles()?.size}")
                     val files =
                         directory.file
                             .listFiles()

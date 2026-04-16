@@ -170,7 +170,6 @@ object PdfUtils {
         document.open()
 
         files.forEach { file ->
-            println("Merging ${file.absolutePath}")
             val reader = PdfReader(file.absolutePath)
             for (i in 1..reader.numberOfPages) {
                 copy.addPage(copy.getImportedPage(reader, i))
@@ -422,13 +421,11 @@ object PdfUtils {
                 BaseFont.createFont(name, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
             }
         }.getOrElse {
-            println("Failed to load IDENTITY_H for: $name - trying WINANSI")
 
             runCatching {
                 // 4. Fallback for built-in standard fonts (Helvetica, Times, etc.)
                 BaseFont.createFont(name, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
             }.getOrElse {
-                println("Failed all lookups for: $name - defaulting to Helvetica")
                 BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
             }
         }

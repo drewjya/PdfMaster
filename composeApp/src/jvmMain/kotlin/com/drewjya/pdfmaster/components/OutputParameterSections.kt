@@ -199,7 +199,6 @@ fun OutputParameterSections(
                     externalValue = identitySettings?.opacity?.run { (this * 100).toInt() }?.toString() ?: "0",
                     onValueChange = { str ->
                         val value = str.toBigDecimalOrNull()
-                        println(str)
                         if (value != null) {
                             val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("100"))
                             configViewModel.updateIdentitySettings {
