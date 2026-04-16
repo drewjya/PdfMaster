@@ -97,7 +97,7 @@ compose.desktop {
             )
 
             packageName = "PdfMaster"
-            packageVersion = "1.1.5"
+            packageVersion = "1.1.6"
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"
