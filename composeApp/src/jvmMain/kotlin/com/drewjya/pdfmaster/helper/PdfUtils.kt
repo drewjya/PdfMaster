@@ -111,7 +111,7 @@ object PdfUtils {
                                     .replace("{variable}", batchConfig.variable)
                                     .ifBlank { "$name - $date" }
                                     .ensurePdfExtension()
-                            File(outputDir, outName).writeBytes(enhanced)
+                            File(groupedOutputDir, outName).writeBytes(enhanced)
                         } catch (e: Exception) {
                             return SnackbarMessage(
                                 MessageType.Error,
