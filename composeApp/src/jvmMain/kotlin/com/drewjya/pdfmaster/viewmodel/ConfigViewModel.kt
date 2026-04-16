@@ -2,8 +2,8 @@ package com.drewjya.pdfmaster.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.drewjya.pdfmaster.data.ConfigManager
 import com.drewjya.pdfmaster.helper.BatchSettings
-import com.drewjya.pdfmaster.helper.ConfigManager
 import com.drewjya.pdfmaster.helper.EnhancementType
 import com.drewjya.pdfmaster.helper.IdentitySettings
 import com.drewjya.pdfmaster.helper.MergeSettings
@@ -50,34 +50,34 @@ class ConfigViewModel(
 
     // --- CONFIGURATION MANAGEMENT ---
 
-    fun createNewConfig(name: String) {
-        viewModelScope.launch {
-            val newId =
-                java.util.UUID
-                    .randomUUID()
-                    .toString()
-            val newConfig =
-                OutputConfiguration(
-                    id = newId,
-                    name = name,
-                    targetDirectory = System.getProperty("user.home"),
-                )
-            configManager.saveConfig(newConfig)
-            configManager.setActiveConfig(newId)
-        }
-    }
-
-    fun switchActiveConfig(id: String) {
-        viewModelScope.launch {
-            configManager.setActiveConfig(id)
-        }
-    }
-
-    fun deleteConfig(id: String) {
-        viewModelScope.launch {
-            configManager.deleteConfig(id)
-        }
-    }
+//    fun createNewConfig(name: String) {
+//        viewModelScope.launch {
+//            val newId =
+//                java.util.UUID
+//                    .randomUUID()
+//                    .toString()
+//            val newConfig =
+//                OutputConfiguration(
+//                    id = newId,
+//                    name = name,
+//                    targetDirectory = System.getProperty("user.home"),
+//                )
+//            configManager.saveConfig(newConfig)
+//            configManager.setActiveConfig(newId)
+//        }
+//    }
+//
+//    fun switchActiveConfig(id: String) {
+//        viewModelScope.launch {
+//            configManager.setActiveConfig(id)
+//        }
+//    }
+//
+//    fun deleteConfig(id: String) {
+//        viewModelScope.launch {
+//            configManager.deleteConfig(id)
+//        }
+//    }
 
     fun updateProcessMode(newMode: ProcessMode) {
         val current = uiState.value?.savedConfigs?.get(uiState.value?.activeConfigId) ?: return

@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
-import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.updater.UpdateState
 import kotlinx.coroutines.launch
@@ -154,7 +153,7 @@ fun VersionButton() {
             is UpdateState.Idle, is UpdateState.UpToDate -> {
                 val isLatest = (s == UpdateState.UpToDate)
                 Icon(
-                    imageVector = AppIcon.Download, // or your version/info icon
+                    imageVector = AppIcon.Download,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = contentColor,
@@ -230,7 +229,7 @@ fun VersionButton() {
 
             is UpdateState.Error -> {
                 Icon(
-                    imageVector = Icons.Trash, // or error icon
+                    imageVector = AppIcon.Trash, // or error icon
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = contentColor,

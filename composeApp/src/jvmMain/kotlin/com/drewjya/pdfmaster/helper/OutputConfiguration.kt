@@ -7,16 +7,19 @@ import org.openpdf.text.FontFactory
 
 fun getAvailableFonts(): List<String> {
     FontFactory.registerDirectories()
-    return (FontFactory.getRegisteredFonts().filter {
-        val value = it.trim()
-        val isFirstCapital = value.firstOrNull()?.isUpperCase() ?: false
-        if (value.isEmpty()) {
-            false
-        } else {
-            isFirstCapital
-        }
-    }
-        .toList()).sortedBy { it }
+    return (
+            FontFactory
+                .getRegisteredFonts()
+                .filter {
+                    val value = it.trim()
+                    val isFirstCapital = value.firstOrNull()?.isUpperCase() ?: false
+                    if (value.isEmpty()) {
+                        false
+                    } else {
+                        isFirstCapital
+                    }
+                }.toList()
+            ).sortedBy { it }
 }
 
 @Serializable
@@ -39,11 +42,6 @@ enum class PageFormat(
     All("Page {page} of {total}"),
 }
 
-@Serializable
-data class NumberPosition(
-    val x: Int = 0,
-    val y: Int = 0,
-)
 
 @Serializable
 enum class DatePattern(
@@ -68,11 +66,12 @@ data class BatchSettings(
     val variable: String = "Statement",
     val separator: String = " - ",
     val format: String = "{identifier} - {variable} {date}.pdf",
-    val listPrefixOrder: List<String> = listOf(
-        "Portfolio Activity",
-        "2",
-        "Statement Position"
-    ),
+    val listPrefixOrder: List<String> =
+        listOf(
+            "Portfolio Activity",
+            "2",
+            "Statement Position",
+        ),
 )
 
 @Serializable

@@ -9,14 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
-import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.path
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -39,8 +38,6 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
         rememberDirectoryPickerLauncher(
             onResult = { directory ->
                 if (directory != null) {
-                    println("Selected directory: ${directory.path}")
-                    pdfViewModel.inputDirectory.value = directory.path
                     println("${directory.file.listFiles()?.size}")
                     val files =
                         directory.file
@@ -66,20 +63,20 @@ fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             BadgeButton(
                 label = "Add Files",
-                icon = Icons.FileAdd,
+                icon = AppIcon.FileAdd,
                 color = appTheme.primary,
                 onClick = { pickerFiles.launch() },
             )
             BadgeButton(
                 label = "Add Directory",
-                icon = Icons.FolderPlus,
+                icon = AppIcon.FolderPlus,
                 color = appTheme.onSurface,
                 onClick = { inputDirectory.launch() },
             )
 
             BadgeButton(
                 label = "Delete All",
-                icon = Icons.Trash,
+                icon = AppIcon.Trash,
                 color = appTheme.error,
                 onClick = { pdfViewModel.clearFiles() },
             )

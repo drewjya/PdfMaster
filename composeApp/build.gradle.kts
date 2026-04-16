@@ -47,8 +47,8 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.compose)
 
-            implementation(libs.slf4j.simple)
-            implementation(libs.jcl.over.slf4j)
+//            implementation(libs.slf4j.simple)
+//            implementation(libs.jcl.over.slf4j)
 
             implementation("com.github.librepdf:openpdf:3.0.3")
 
@@ -64,7 +64,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation(libs.apache.pdfbox)
+//            implementation(libs.apache.pdfbox)
         }
     }
 }
@@ -94,7 +94,7 @@ compose.desktop {
             )
 
             packageName = "PdfMaster"
-            packageVersion = "1.1.7"
+            packageVersion = "1.1.0"
 
             macOS {
                 bundleID = "com.drewjya.pdfmaster"

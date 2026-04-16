@@ -4,8 +4,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.drewjya.pdfmaster.di.appModule
 import io.github.vinceglb.filekit.FileKit
-import java.awt.Dimension
 import org.koin.core.context.GlobalContext.startKoin
+import java.awt.Dimension
 
 fun main() {
     FileKit.init(appId = "PdfMaster")

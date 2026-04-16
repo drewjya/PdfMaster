@@ -285,7 +285,7 @@ fun <T> DropdownPicker(
     placeholder: String = "Select Item",
     items: List<T> = emptyList(),
     getLabel: (T) -> String = { it.toString() },
-    suggestionSize: Int = 10
+    suggestionSize: Int = 10,
 ) {
     var showSuggestions by remember { mutableStateOf(false) }
     var dropdownWidth by remember { mutableStateOf(0) }
@@ -294,8 +294,6 @@ fun <T> DropdownPicker(
     var searchQuery by remember {
         mutableStateOf(TextFieldValue(value?.let { getLabel(it) } ?: ""))
     }
-
-
 
     LaunchedEffect(value, showSuggestions) {
         if (!showSuggestions) {
@@ -317,13 +315,14 @@ fun <T> DropdownPicker(
     val useSearch = items.size > suggestionSize
 
     // Filter logic: If searching, filter. If not, show original list.
-    val filteredItems = remember(searchQuery.text, items) {
-        if (useSearch && searchQuery.text.isNotEmpty()) {
-            items.filter { getLabel(it).contains(searchQuery.text, ignoreCase = true) }
-        } else {
-            items
-        }
-    }.take(suggestionSize)
+    val filteredItems =
+        remember(searchQuery.text, items) {
+            if (useSearch && searchQuery.text.isNotEmpty()) {
+                items.filter { getLabel(it).contains(searchQuery.text, ignoreCase = true) }
+            } else {
+                items
+            }
+        }.take(suggestionSize)
     InputWrapper(modifier = modifier, label = label) {
         Row(
             Modifier
@@ -375,10 +374,11 @@ fun <T> DropdownPicker(
         DropdownMenu(
             expanded = showSuggestions,
             properties = PopupProperties(focusable = true), // Ensures TextField gets focus
-            modifier = Modifier
-                .width(with(density) { dropdownWidth.toDp() })
-                .background(Color.White)
-                .heightIn(max = 300.dp),
+            modifier =
+                Modifier
+                    .width(with(density) { dropdownWidth.toDp() })
+                    .background(Color.White)
+                    .heightIn(max = 300.dp),
             onDismissRequest = { showSuggestions = false },
         ) {
             if (useSearch) {
@@ -390,25 +390,26 @@ fun <T> DropdownPicker(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         interactionSource = searchInteractionSource,
-                        textStyle = LocalTextStyle.current.copy(
-                            color = appTheme.onSurface,
-                            fontSize = 12.sp,
-                        ),
+                        textStyle =
+                            LocalTextStyle.current.copy(
+                                color = appTheme.onSurface,
+                                fontSize = 12.sp,
+                            ),
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         cursorBrush = SolidColor(appTheme.primary),
                         decorationBox = { innerTextField ->
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(appTheme.surfaceAlt, RoundedCornerShape(6.dp))
-                                    .border(
-                                        1.dp,
-                                        if (isSearchFocused) appTheme.primary.copy(0.3f) else Color.Transparent,
-                                        RoundedCornerShape(6.dp)
-                                    )
-                                    .height(32.dp)
-                                    .padding(horizontal = 8.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(appTheme.surfaceAlt, RoundedCornerShape(6.dp))
+                                        .border(
+                                            1.dp,
+                                            if (isSearchFocused) appTheme.primary.copy(0.3f) else Color.Transparent,
+                                            RoundedCornerShape(6.dp),
+                                        ).height(32.dp)
+                                        .padding(horizontal = 8.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 if (searchQuery.text.isEmpty()) {
@@ -430,16 +431,17 @@ fun <T> DropdownPicker(
                         "No results",
                         modifier = Modifier.padding(8.dp).fillMaxWidth(),
                         fontSize = 12.sp,
-                        color = appTheme.onSurfaceMuted
+                        color = appTheme.onSurfaceMuted,
                     )
                 } else {
                     filteredItems.forEach { item ->
                         val isSelected = item == value
                         DropdownMenuItem(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .height(36.dp)
-                                .background(if (isSelected) appTheme.primary.copy(0.1f) else Color.Transparent),
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .height(36.dp)
+                                    .background(if (isSelected) appTheme.primary.copy(0.1f) else Color.Transparent),
                             contentPadding = PaddingValues(horizontal = 8.dp),
                             text = {
                                 Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
@@ -456,7 +458,7 @@ fun <T> DropdownPicker(
                             onClick = {
                                 onSelected(item)
                                 showSuggestions = false
-                            }
+                            },
                         )
                     }
                 }

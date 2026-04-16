@@ -9,9 +9,7 @@ import com.drewjya.pdfmaster.design.AppTheme
 import org.koin.compose.koinInject
 
 @Composable
-fun Root(
-    appTheme: AppTheme = koinInject(),
-) {
+fun Root(appTheme: AppTheme = koinInject()) {
     Column(modifier = Modifier.fillMaxSize().background(appTheme.neutral)) {
         Navbar()
         MainLayout(
@@ -25,6 +23,4 @@ fun Root(
         )
         Footer(appTheme = appTheme)
     }
-
 }
-

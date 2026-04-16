@@ -50,10 +50,8 @@ data class SnackbarMessage(
 @Composable
 fun AppSnackbar(
     modifier: Modifier = Modifier,
-    pdfViewModel: PdfViewModel = koinViewModel()
+    pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
-
-
     val message by pdfViewModel.snackbarMessage
     LaunchedEffect(message) {
         if (message != null) {

@@ -1,10 +1,12 @@
-package com.drewjya.pdfmaster.helper
+package com.drewjya.pdfmaster.data
 
-
+import com.drewjya.pdfmaster.helper.OutputConfiguration
+import com.drewjya.pdfmaster.helper.UserConfigs
 import io.github.vinceglb.filekit.utils.toPath
 import io.github.xxfast.kstore.KStore
 import io.github.xxfast.kstore.file.storeOf
 import java.io.File
+import java.util.UUID
 import org.openpdf.text.FontFactory
 
 class ConfigManager {
@@ -18,7 +20,7 @@ class ConfigManager {
     }
 
     private val defaultId =
-        java.util.UUID
+        UUID
             .randomUUID()
             .toString()
     private val defaultInitialState =
@@ -50,36 +52,36 @@ class ConfigManager {
         }
     }
 
-    suspend fun setActiveConfig(id: String) {
-        store.update { current ->
-            current?.copy(activeConfigId = id)
-        }
-    }
+//    suspend fun setActiveConfig(id: String) {
+//        store.update { current ->
+//            current?.copy(activeConfigId = id)
+//        }
+//    }
 
     /**
      * Deletes a configuration ONLY if there is more than one present.
      */
-    suspend fun deleteConfig(id: String) {
-        store.update { current ->
-            val currentMap = current?.savedConfigs ?: emptyMap()
-
-            // RULE: Min have 1 config. If only 1 exists, ignore the delete request.
-            if (currentMap.size <= 1) return@update current
-
-            val updatedMap = currentMap.minus(id)
-
-            // If we deleted the active one, pick the next available key as the new active
-            val newActiveId =
-                if (current?.activeConfigId == id) {
-                    updatedMap.keys.first()
-                } else {
-                    current?.activeConfigId ?: updatedMap.keys.first()
-                }
-
-            current?.copy(
-                savedConfigs = updatedMap,
-                activeConfigId = newActiveId,
-            )
-        }
-    }
+//    suspend fun deleteConfig(id: String) {
+//        store.update { current ->
+//            val currentMap = current?.savedConfigs ?: emptyMap()
+//
+//            // RULE: Min have 1 config. If only 1 exists, ignore the delete request.
+//            if (currentMap.size <= 1) return@update current
+//
+//            val updatedMap = currentMap.minus(id)
+//
+//            // If we deleted the active one, pick the next available key as the new active
+//            val newActiveId =
+//                if (current?.activeConfigId == id) {
+//                    updatedMap.keys.first()
+//                } else {
+//                    current?.activeConfigId ?: updatedMap.keys.first()
+//                }
+//
+//            current?.copy(
+//                savedConfigs = updatedMap,
+//                activeConfigId = newActiveId,
+//            )
+//        }
+//    }
 }

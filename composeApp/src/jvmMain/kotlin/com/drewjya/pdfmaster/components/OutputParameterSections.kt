@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
-import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.DatePattern
 import com.drewjya.pdfmaster.helper.EnhancementType
 import com.drewjya.pdfmaster.helper.PageFormat
@@ -65,9 +65,9 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import java.math.BigDecimal
 import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
@@ -95,7 +95,7 @@ fun OutputParameterSections(
 
             CardTitle(
                 title = "Batch",
-                icon = Icons.Batch,
+                icon = AppIcon.Batch,
                 active = active,
                 onToggle = {
                     if (it) {
@@ -147,7 +147,7 @@ fun OutputParameterSections(
                 )
             CardTitle(
                 title = "Merge",
-                icon = Icons.Merge,
+                icon = AppIcon.Merge,
                 expanded = expanded,
                 onExpand = onExpand,
                 active = active,
@@ -180,7 +180,7 @@ fun OutputParameterSections(
                         pickerFile.launch()
                     },
                     value = name,
-                    icon = Icons.FileAdd,
+                    icon = AppIcon.FileAdd,
                 )
             }
         }
@@ -244,7 +244,7 @@ fun OutputParameterSections(
                 )
             CardTitle(
                 title = "Identity",
-                icon = Icons.Identity,
+                icon = AppIcon.Identity,
                 expanded = expanded,
                 onExpand = onExpand,
                 active = active,
@@ -363,7 +363,7 @@ fun OutputParameterSections(
                 )
             CardTitle(
                 title = "Numbering",
-                icon = Icons.Numbering,
+                icon = AppIcon.Numbering,
                 expanded = expanded,
                 onExpand = onExpand,
                 active = active,

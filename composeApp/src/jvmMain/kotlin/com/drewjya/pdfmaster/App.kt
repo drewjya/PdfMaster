@@ -11,11 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -37,7 +34,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.hours
 
-private val Slate50 = Color(0xFFF8FAFC)
 
 fun startBackgroundUpdateCheck(
     updater: AppUpdater,
@@ -58,15 +54,10 @@ fun App(
     appTheme: AppTheme = koinInject(),
     viewModel: PdfViewModel = koinViewModel(),
 ) {
-
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         startBackgroundUpdateCheck(updater, scope)
     }
-
-
-    var currentScreen by remember { mutableStateOf(Screen.Merge) }
-
 
     val dragAndDropTarget =
         remember {
@@ -105,11 +96,12 @@ fun App(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.fillMaxSize().dragAndDropTarget(
-                    shouldStartDragAndDrop = { true },
-                    target = dragAndDropTarget
-                ),
-                content = { Root(appTheme) }
+                modifier =
+                    Modifier.fillMaxSize().dragAndDropTarget(
+                        shouldStartDragAndDrop = { true },
+                        target = dragAndDropTarget,
+                    ),
+                content = { Root(appTheme) },
             )
 
             if (viewModel.isDragging.value) {

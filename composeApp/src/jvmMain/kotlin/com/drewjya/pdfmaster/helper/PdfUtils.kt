@@ -40,103 +40,122 @@ object PdfUtils {
     fun processFiles(
         files: List<File>,
         configuration: OutputConfiguration,
-    ): SnackbarMessage? {
+    ): SnackbarMessage {
         val outputDir = File(configuration.targetDirectory)
         var message = handleDirectory(outputDir)
         if (message != null) return message
 
-        message = when (configuration.mode) {
-            ProcessMode.Merge -> {
-                try {
-                    val mergedBytes = mergeFiles(files)
-                    val enhanced = applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
-                    val outName =
-                        configuration.mergeSettings.mergeName
-                            .ifBlank { configuration.name }
-                            .ensurePdfExtension()
-                    File(outputDir, outName).writeBytes(enhanced)
-                    null
-                } catch (e: Exception) {
-                    SnackbarMessage(
-                        MessageType.Error,
-                        "Failed to merge files",
-                        "Failed to merge files: ${e.message}",
-                    )
-                }
-            }
-
-            ProcessMode.Batch -> {
-                val batchConfig = configuration.batchSettings
-                val date =
-                    SimpleDateFormat(batchConfig.dateFormat.pattern)
-                        .format(Date(batchConfig.selectedDate))
-
-                val groupedOutputDir = File(outputDir, date)
-                val msg = handleDirectory(groupedOutputDir)
-                if (msg != null) return msg
-
-                val groupedResult = files.groupBy { file ->
-                    file.name.split(" - ").first().trim()
-                }
-                val listPrefixOrder = batchConfig.listPrefixOrder
-                groupedResult.forEach { (name, files) ->
-                    val sortedList = files.sortedBy { file ->
-                        val priority = listPrefixOrder.indexOfFirst { prefix ->
-                            file.name.contains(prefix, ignoreCase = true)
-                        }
-                        if (priority == -1) listPrefixOrder.size else priority
-                    }
-
+        message =
+            when (configuration.mode) {
+                ProcessMode.Merge -> {
                     try {
-                        val mergedBytes = mergeFiles(sortedList)
+                        val mergedBytes = mergeFiles(files)
                         val enhanced =
                             applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
                         val outName =
-                            batchConfig.format
-                                .replace("{identifier}", name)
-                                .replace("{date}", date)
-                                .replace("{variable}", batchConfig.variable)
-                                .ifBlank { "$name - $date" }.ensurePdfExtension()
-                        File(outputDir, outName).writeBytes(enhanced)
-                        null
+                            configuration.mergeSettings.mergeName
+                                .ifBlank { configuration.name }
+                                .ensurePdfExtension()
+                        val output = File(outputDir, outName)
+                        output.writeBytes(enhanced)
+                        SnackbarMessage(
+                            MessageType.Success,
+                            "Merged ${files.size} files",
+                            "Success merged files to ${output.absolutePath}"
+                        )
                     } catch (e: Exception) {
-                        return SnackbarMessage(
+                        SnackbarMessage(
                             MessageType.Error,
                             "Failed to merge files",
                             "Failed to merge files: ${e.message}",
                         )
                     }
                 }
-                null
 
-            }
+                ProcessMode.Batch -> {
+                    val batchConfig = configuration.batchSettings
+                    val date =
+                        SimpleDateFormat(batchConfig.dateFormat.pattern)
+                            .format(Date(batchConfig.selectedDate))
 
-            ProcessMode.None -> {
-                if (configuration.activeEnhancements.isEmpty()) {
-                    SnackbarMessage(
-                        MessageType.Error,
-                        "No process selected",
-                        "Please select at least one process",
-                    )
-                } else {
+                    val groupedOutputDir = File(outputDir, date)
+                    val msg = handleDirectory(groupedOutputDir)
+                    if (msg != null) return msg
 
-                    try {
-                        files.forEach { file ->
-                            val bytes = file.readBytes()
-                            val enhanced = applyEnhancements(bytes, configuration, totalPages = countPages(bytes))
-                            File(outputDir, file.name.ensurePdfExtension()).writeBytes(enhanced)
+                    val groupedResult =
+                        files.groupBy { file ->
+                            file.name
+                                .split(" - ")
+                                .first()
+                                .trim()
                         }
-                        null
-                    } catch (e: Exception) {
+                    val listPrefixOrder = batchConfig.listPrefixOrder
+                    groupedResult.forEach { (name, files) ->
+                        val sortedList =
+                            files.sortedBy { file ->
+                                val priority =
+                                    listPrefixOrder.indexOfFirst { prefix ->
+                                        file.name.contains(prefix, ignoreCase = true)
+                                    }
+                                if (priority == -1) listPrefixOrder.size else priority
+                            }
+
+                        try {
+                            val mergedBytes = mergeFiles(sortedList)
+                            val enhanced =
+                                applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
+                            val outName =
+                                batchConfig.format
+                                    .replace("{identifier}", name)
+                                    .replace("{date}", date)
+                                    .replace("{variable}", batchConfig.variable)
+                                    .ifBlank { "$name - $date" }
+                                    .ensurePdfExtension()
+                            File(outputDir, outName).writeBytes(enhanced)
+                        } catch (e: Exception) {
+                            return SnackbarMessage(
+                                MessageType.Error,
+                                "Failed to merge files",
+                                "Failed to merge files: ${e.message}",
+                            )
+                        }
+                    }
+                    SnackbarMessage(
+                        MessageType.Success,
+                        "Batch Process Success",
+                        "Successfully batch merged and enhance files to ${groupedOutputDir.absolutePath}"
+                    )
+                }
+
+                ProcessMode.None -> {
+                    if (configuration.activeEnhancements.isEmpty()) {
                         SnackbarMessage(
                             MessageType.Error,
-                            "Failed to process files",
-                            "Failed to process files: ${e.message}",
+                            "No process selected",
+                            "Please select at least one process",
                         )
+                    } else {
+                        try {
+                            files.forEach { file ->
+                                val bytes = file.readBytes()
+                                val enhanced = applyEnhancements(bytes, configuration, totalPages = countPages(bytes))
+                                File(outputDir, file.name.ensurePdfExtension()).writeBytes(enhanced)
+                            }
+                            SnackbarMessage(
+                                MessageType.Success,
+                                "Enhanced ${files.size} files",
+                                "Success enhanced files to ${outputDir.absolutePath}"
+                            )
+                        } catch (e: Exception) {
+                            SnackbarMessage(
+                                MessageType.Error,
+                                "Failed to process files",
+                                "Failed to process files: ${e.message}",
+                            )
+                        }
                     }
                 }
             }
-        }
         return message
     }
 
@@ -386,7 +405,6 @@ object PdfUtils {
 
     /** Resolve a BaseFont from an optional family name, falling back to Helvetica. */
     private fun resolveBaseFont(fontName: String): BaseFont {
-
         val name = fontName.trim()
 
         // 1. Handle empty name immediately

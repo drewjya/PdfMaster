@@ -1,9 +1,8 @@
 package com.drewjya.pdfmaster.di
 
-import com.drewjya.pdfmaster.data.AppPreferences
+import com.drewjya.pdfmaster.data.ConfigManager
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.PrimaryAppTheme
-import com.drewjya.pdfmaster.helper.ConfigManager
 import com.drewjya.pdfmaster.updater.AppUpdater
 import com.drewjya.pdfmaster.updater.DesktopAssetDownloader
 import com.drewjya.pdfmaster.updater.DesktopAssetInstaller
@@ -15,9 +14,7 @@ import org.koin.dsl.module
 
 val appModule =
     module {
-        single { AppPreferences() }
         viewModelOf(::PdfViewModel)
-
         single { ConfigManager() }
         viewModelOf(::ConfigViewModel)
 
@@ -28,15 +25,15 @@ val appModule =
                         owner = "drewjya",
                         repo = "pdfmaster",
                     ),
-                currentVersion = "1.1.7",
+                currentVersion = "1.1.0",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
-                        name.endsWith(".exe") ||
-                        name.endsWith(".dmg") ||
-                        name.endsWith(".AppImage") ||
-                        name.endsWith(".deb") ||
-                        name.endsWith(".rpm") ||
-                        name.endsWith(".jar")
+                            name.endsWith(".exe") ||
+                            name.endsWith(".dmg") ||
+                            name.endsWith(".AppImage") ||
+                            name.endsWith(".deb") ||
+                            name.endsWith(".rpm") ||
+                            name.endsWith(".jar")
                 },
                 downloader = DesktopAssetDownloader(),
                 installer = DesktopAssetInstaller(),

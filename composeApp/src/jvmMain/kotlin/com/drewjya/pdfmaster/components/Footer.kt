@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.drewjya.pdfmaster.design.AppIcon
 import com.drewjya.pdfmaster.design.AppTheme
-import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.PdfUtils
 import com.drewjya.pdfmaster.hooks.rememberAppInput
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
@@ -84,7 +84,7 @@ fun Footer(
             // Or ensure your InputIcon was also updated to accept TextFieldValue
             InputIcon(
                 label = "TARGET DIRECTORY",
-                icon = Icons.FolderOutput,
+                icon = AppIcon.FolderOutput,
                 onIconClick = pickerDirectory::launch,
                 value = targetDir, // Pass the TextFieldValue
                 onValueChange = setTargetDir,

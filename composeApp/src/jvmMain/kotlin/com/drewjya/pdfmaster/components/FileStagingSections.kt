@@ -60,10 +60,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import java.io.File
-import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
+import java.math.BigDecimal
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -170,7 +170,7 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
             modifier = Modifier.size(48.dp).background(Color.White, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(com.drewjya.pdfmaster.design.Icons.Empty, contentDescription = null, tint = appTheme.primary)
+            Icon(com.drewjya.pdfmaster.design.AppIcon.Empty, contentDescription = null, tint = appTheme.primary)
         }
 
         Column {
@@ -206,23 +206,32 @@ fun FileItem(
     var isHovered by remember { mutableStateOf(false) }
 
     val tintColor by animateColorAsState(
-        targetValue = if (isHovered) appTheme.primary.copy(
-            alpha = 0.7f
-        ) else appTheme.onSurfaceMuted,
-        label = "TintColorAnimation"
+        targetValue =
+            if (isHovered) {
+                appTheme.primary.copy(
+                    alpha = 0.7f,
+                )
+            } else {
+                appTheme.onSurfaceMuted
+            },
+        label = "TintColorAnimation",
     )
 
     val borderColor by animateColorAsState(
-        targetValue = if (isHovered) appTheme.primary.copy(
-            alpha = 0.7f
-        ) else appTheme.onSurfaceMuted.copy(alpha = 0.2f),
-        label = "BorderColorAnimation"
+        targetValue =
+            if (isHovered) {
+                appTheme.primary.copy(
+                    alpha = 0.7f,
+                )
+            } else {
+                appTheme.onSurfaceMuted.copy(alpha = 0.2f)
+            },
+        label = "BorderColorAnimation",
     )
     val weight by animateFloatAsState(
         targetValue = if (isHovered) 650f else 400f,
         label = "WeightAnimation",
-
-        )
+    )
 
     val clip = RoundedCornerShape(8.dp)
 
@@ -233,11 +242,11 @@ fun FileItem(
             // Enter transition: Fade in + Expand horizontally
             enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(),
             // Exit transition: Fade out + Shrink horizontally
-            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally()
+            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally(),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
                     onClick = { pdfViewModel.moveFile(file, isUp = true) },
@@ -248,7 +257,7 @@ fun FileItem(
                 IconButton(
                     onClick = { pdfViewModel.removeFile(file) },
                     color = appTheme.error,
-                    icon = com.drewjya.pdfmaster.design.Icons.Trash,
+                    icon = com.drewjya.pdfmaster.design.AppIcon.Trash,
                 )
                 IconButton(
                     onClick = { pdfViewModel.moveFile(file, isUp = false) },
@@ -299,7 +308,7 @@ fun FileItem(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    com.drewjya.pdfmaster.design.Icons.Pdf,
+                    com.drewjya.pdfmaster.design.AppIcon.Pdf,
                     contentDescription = null,
                     tint = tintColor,
                     modifier = Modifier.size(32.dp),
@@ -322,25 +331,25 @@ fun FileItem(
                     color = appTheme.onSurfaceMuted.copy(alpha = 0.8f),
                 )
             }
-
         }
     } else {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onPointerEvent(PointerEventType.Enter) { isHovered = true }
-                .onPointerEvent(PointerEventType.Exit) { isHovered = false }
-                .clip(clip)
-                .background(appTheme.surface, clip)
-
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+                    .onPointerEvent(PointerEventType.Exit) { isHovered = false }
+                    .clip(clip)
+                    .background(appTheme.surface, clip),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(clip)
-                    .border(1.5.dp, borderColor, clip)
-                    .padding(12.dp),
-//                .blur(blurRadius)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(clip)
+                        .border(1.5.dp, borderColor, clip)
+                        .padding(12.dp),
+                //                .blur(blurRadius)
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -354,10 +363,10 @@ fun FileItem(
                 }
 
                 Icon(
-                    com.drewjya.pdfmaster.design.Icons.Pdf,
+                    com.drewjya.pdfmaster.design.AppIcon.Pdf,
                     contentDescription = null,
                     tint = tintColor,
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 8.dp),
                 )
 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -382,8 +391,6 @@ fun FileItem(
                 actions()
             }
         }
-
-
     }
 }
 
