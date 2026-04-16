@@ -22,12 +22,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -65,10 +69,9 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import java.math.BigDecimal
-import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
 fun OutputParameterSections(
@@ -110,6 +113,26 @@ fun OutputParameterSections(
 
             ConfigWrapper(active = active, expanded = expanded) {
                 val batchSettings = activeConfig?.batchSettings
+                val (format, setFormat) =
+                    rememberAppInput(
+                        externalValue = batchSettings?.format,
+                        onValueChange = { newValue -> configViewModel.updateBatchSettings { it.copy(format = newValue) } },
+                    )
+                val (variable, setVariable) =
+                    rememberAppInput(
+                        externalValue = batchSettings?.variable,
+                        onValueChange = { newValue -> configViewModel.updateBatchSettings { it.copy(variable = newValue) } },
+                    )
+
+                val (separator, setSeparator) =
+                    rememberAppInput(
+                        externalValue = batchSettings?.separator,
+                        onValueChange = { newValue -> configViewModel.updateBatchSettings { it.copy(separator = newValue) } },
+                    )
+
+                var textFieldValue by remember {
+                    mutableStateOf(TextFieldValue(""))
+                }
 
                 DynamicPosition(maxItemsInEachRow = { if (it > 350.dp) 2 else 1 }) {
                     DropdownPicker(
@@ -134,6 +157,93 @@ fun OutputParameterSections(
                             configViewModel.updateBatchSettings { it.copy(selectedDate = selected) }
                         },
                     )
+
+                    Input(
+                        modifier = Modifier.weight(1f),
+                        label = "FORMAT",
+                        enabled = active,
+                        value = format,
+                        onValueChange = setFormat,
+                    )
+                    Input(
+                        modifier = Modifier.weight(1f),
+                        label = "SEPARATOR",
+                        enabled = active,
+                        value = separator,
+                        onValueChange = setSeparator,
+                    )
+                    Input(
+                        modifier = Modifier.weight(1f),
+                        label = "VARIABLE",
+                        enabled = active,
+                        value = variable,
+                        onValueChange = setVariable,
+                    )
+
+                    InputIcon(
+                        modifier = Modifier.weight(1f),
+                        label = "LIST ORDER",
+                        enabled = active,
+                        value = textFieldValue,
+                        onValueChange = { newValue -> textFieldValue = newValue },
+                        placeholder = "Input list order",
+                        icon = Icons.AutoMirrored.Filled.List,
+                        onIconClick = {
+
+                            configViewModel.updateBatchSettings {
+                                it.copy(
+                                    listPrefixOrder = (it.listPrefixOrder + textFieldValue.text).distinct()
+                                )
+                            }
+
+                            textFieldValue = TextFieldValue("")
+                        },
+                    )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        maxItemsInEachRow = 3,
+                    ) {
+                        val prefixes = batchSettings?.listPrefixOrder.orEmpty()
+                        prefixes.forEachIndexed { index, item ->
+                            Row(
+                                modifier = Modifier.height(32.dp)
+                                    .background(appTheme.surfaceAlt)
+                                    .clip(RoundedCornerShape(4.dp)),
+                            ) {
+                                Box(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = "${index + 1}. " + item,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = appTheme.onSurface,
+                                    )
+                                }
+
+                                IconButton(
+                                    clip = RoundedCornerShape(0.dp),
+                                    boxSize = 32.dp,
+                                    onClick = {
+                                        configViewModel.updateBatchSettings {
+                                            it.copy(
+                                                listPrefixOrder = it.listPrefixOrder.toMutableList().apply {
+                                                    removeAt(index)
+                                                }
+                                            )
+                                        }
+                                    },
+                                    color = appTheme.error,
+                                    icon = AppIcon.Trash,
+                                )
+
+
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -215,13 +325,13 @@ fun OutputParameterSections(
             val (rotation, setRotation) =
                 rememberAppInput(
                     externalValue = identitySettings?.rotation?.toString(),
-                    onValueChange = {
-                        val value = it.toBigDecimalOrNull()
+                    onValueChange = { str ->
+                        val value = str.toBigDecimalOrNull()
 
                         if (value != null) {
                             val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("360"))
                             configViewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
-                        } else if (it.trim().isBlank()) {
+                        } else if (str.trim().isBlank()) {
                             configViewModel.updateIdentitySettings { it.copy(rotation = 0) }
                         }
                     },
@@ -230,13 +340,13 @@ fun OutputParameterSections(
             val (fontSize, setFontSize) =
                 rememberAppInput(
                     externalValue = identitySettings?.fontSize?.toString(),
-                    onValueChange = {
-                        val value = it.toBigDecimalOrNull()
+                    onValueChange = { str ->
+                        val value = str.toBigDecimalOrNull()
 
                         if (value != null) {
                             val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
                             configViewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
-                        } else if (it.trim().isBlank()) {
+                        } else if (str.trim().isBlank()) {
                             configViewModel.updateIdentitySettings { it.copy(fontSize = 1) }
                         }
                     },
@@ -323,13 +433,13 @@ fun OutputParameterSections(
             val (fontSize, setFontSize) =
                 rememberAppInput(
                     externalValue = numberingSettings?.fontSize?.toString(),
-                    onValueChange = {
-                        val value = it.toBigDecimalOrNull()
+                    onValueChange = { str ->
+                        val value = str.toBigDecimalOrNull()
 
                         if (value != null) {
                             val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
                             configViewModel.updateNumberingSettings { it.copy(fontSize = clamped.toInt()) }
-                        } else if (it.trim().isBlank()) {
+                        } else if (str.trim().isBlank()) {
                             configViewModel.updateNumberingSettings { it.copy(fontSize = 1) }
                         }
                     },
@@ -461,7 +571,9 @@ fun CardWrapper(
         Column(
             modifier = Modifier.clip(border),
         ) {
-            content(expanded.value, { expanded.value = it })
+            content(expanded.value) {
+                expanded.value = it
+            }
         }
     }
 }
@@ -501,7 +613,7 @@ fun CardTitle(
             )
 
             Icon(
-                imageVector = OldIcon.AutoMirrored.Default.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
                 contentDescription = null,
                 tint = if (active) appTheme.primary else appTheme.onSurfaceMuted,
                 modifier = Modifier.size(16.dp).rotate(rotationState),

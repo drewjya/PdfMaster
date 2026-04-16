@@ -166,6 +166,7 @@ fun InputIcon(
     label: String = "",
     value: TextFieldValue = TextFieldValue(""),
     enabled: Boolean = true,
+    placeholder: String = "",
     icon: ImageVector,
     onValueChange: (TextFieldValue) -> Unit = {},
     onIconClick: () -> Unit = {},
@@ -174,6 +175,7 @@ fun InputIcon(
     Input(
         enabled = enabled,
         modifier = modifier,
+        placeholder = placeholder,
         label = label,
         value = value,
         onValueChange = onValueChange,

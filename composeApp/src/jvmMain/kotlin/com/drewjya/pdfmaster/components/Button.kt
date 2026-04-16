@@ -27,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowWidthSizeClass
@@ -247,15 +249,18 @@ fun VersionButton() {
 @Composable
 fun IconButton(
     icon: ImageVector,
+    clip: Shape = RoundedCornerShape(4.dp),
+    boxSize: Dp = 24.dp,
     enabled: Boolean = true,
     onClick: () -> Unit,
     color: Color = Color.Transparent,
+    iconSize: Dp = 16.dp,
 ) {
     Box(
         modifier =
             Modifier
-                .size(24.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .size(boxSize)
+                .clip(clip)
                 .clickable(enabled = enabled) { onClick() }
                 .background(color.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center,
@@ -264,7 +269,7 @@ fun IconButton(
             icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(iconSize),
         )
     }
 }
