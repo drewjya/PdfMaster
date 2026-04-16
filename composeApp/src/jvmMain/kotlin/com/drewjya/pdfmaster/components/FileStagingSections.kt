@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -45,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -130,7 +132,7 @@ fun FileStagingPane(
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     LazyColumn(
                         state = verticalState,
-                        modifier = Modifier.fillMaxSize().padding(12.dp).padding(end = 4.dp), // Space for scrollbar
+                        modifier = Modifier.fillMaxSize().padding(8.dp), // Space for scrollbar
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         itemsIndexed(visibleFiles) { index, file ->
@@ -142,9 +144,10 @@ fun FileStagingPane(
                     VerticalScrollbar(
                         modifier =
                             Modifier
-                                .align(Alignment.CenterEnd)
+                                .align(BiasAlignment(0.99f, 0f))
                                 .fillMaxHeight()
-                                .padding(vertical = 12.dp),
+                                .width(4.dp)
+                                .padding(vertical = 8.dp),
                         adapter = rememberScrollbarAdapter(verticalState),
                     )
                 }

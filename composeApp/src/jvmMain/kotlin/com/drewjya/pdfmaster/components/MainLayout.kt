@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -59,16 +60,17 @@ fun MainLayout(
                 configuration(
                     Modifier
                         .fillMaxSize()
-                        .verticalScroll(configScrollState)
-                        .padding(),
+                        .verticalScroll(configScrollState).padding(vertical = 2.dp),
                 )
 
                 // The Desktop Scrollbar
                 VerticalScrollbar(
                     modifier =
                         Modifier
-                            .align(BiasAlignment(1.05f, 0f))
-                            .fillMaxHeight(),
+                            .align(BiasAlignment(0.99f, 0f))
+                            .fillMaxHeight()
+                            .width(4.dp)
+                            .padding(vertical = 8.dp),
                     adapter = rememberScrollbarAdapter(configScrollState),
                 )
             }
