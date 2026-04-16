@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -38,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -287,13 +285,45 @@ fun <T> DropdownPicker(
     placeholder: String = "Select Item",
     items: List<T> = emptyList(),
     getLabel: (T) -> String = { it.toString() },
+    suggestionSize: Int = 10
 ) {
     var showSuggestions by remember { mutableStateOf(false) }
     var dropdownWidth by remember { mutableStateOf(0) }
+
+    // Initialize with the current label if value exists
+    var searchQuery by remember {
+        mutableStateOf(TextFieldValue(value?.let { getLabel(it) } ?: ""))
+    }
+
+
+
+    LaunchedEffect(value, showSuggestions) {
+        if (!showSuggestions) {
+            searchQuery = TextFieldValue("")
+            return@LaunchedEffect
+        }
+        val currentLabel = value?.let { getLabel(it) } ?: ""
+        if (searchQuery.text != currentLabel) {
+            searchQuery = TextFieldValue(currentLabel)
+        }
+    }
+
+    // When opening: Clear search to show all options OR Keep label and select all text
+
     val clip = RoundedCornerShape(8.dp)
     val appTheme = koinInject<AppTheme>()
     val density = LocalDensity.current
 
+    val useSearch = items.size > suggestionSize
+
+    // Filter logic: If searching, filter. If not, show original list.
+    val filteredItems = remember(searchQuery.text, items) {
+        if (useSearch && searchQuery.text.isNotEmpty()) {
+            items.filter { getLabel(it).contains(searchQuery.text, ignoreCase = true) }
+        } else {
+            items
+        }
+    }.take(suggestionSize)
     InputWrapper(modifier = modifier, label = label) {
         Row(
             Modifier
@@ -317,7 +347,6 @@ fun <T> DropdownPicker(
                         text = placeholder,
                         fontWeight = FontWeight.Light,
                         fontSize = 12.sp,
-                        lineHeight = 12.sp,
                         color = appTheme.onSurfaceMuted,
                     )
                 } else {
@@ -325,7 +354,6 @@ fun <T> DropdownPicker(
                         text = getLabel(value),
                         fontWeight = FontWeight.Medium,
                         fontSize = 13.sp,
-                        lineHeight = 12.sp,
                         color = if (enabled) appTheme.onSurface else appTheme.onSurfaceMuted,
                     )
                 }
@@ -340,68 +368,97 @@ fun <T> DropdownPicker(
                 Icons.Default.KeyboardArrowDown,
                 backgroundColor = appTheme.surfaceAlt,
                 color = if (enabled) appTheme.primary else appTheme.primary.copy(alpha = 0.5f),
-                modifier = { modifier -> modifier.rotate(rotationState) },
+                modifier = { m -> m.rotate(rotationState) },
             )
         }
 
         DropdownMenu(
             expanded = showSuggestions,
-            modifier =
-                Modifier
-                    .clip(clip)
-                    .width(with(density) { dropdownWidth.toDp() })
-                    .background(Color.White)
-                    .padding(horizontal = 8.dp)
-                    .heightIn(max = 200.dp),
+            properties = PopupProperties(focusable = true), // Ensures TextField gets focus
+            modifier = Modifier
+                .width(with(density) { dropdownWidth.toDp() })
+                .background(Color.White)
+                .heightIn(max = 300.dp),
             onDismissRequest = { showSuggestions = false },
         ) {
-            items.forEachIndexed { index, item ->
-                val isSelected = item == value
-                DropdownMenuItem(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .height(36.dp)
-                            .background(color = if (isSelected) appTheme.primary.copy(alpha = 0.1f) else Color.White),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                    text = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                getLabel(item),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (isSelected) appTheme.primary else appTheme.onSurface,
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp).align(Alignment.CenterVertically),
-                                    tint = appTheme.primary,
-                                )
-                            }
-                        }
-                    },
-                    onClick = {
-                        onSelected(item)
-                        showSuggestions = false
-                    },
-                    colors =
-                        MenuItemColors(
-                            textColor = if (isSelected) appTheme.primary else appTheme.onSurface,
-                            leadingIconColor = if (isSelected) appTheme.primary else appTheme.onSurface,
-                            trailingIconColor = if (isSelected) appTheme.primary else appTheme.onSurface,
-                            disabledTextColor = appTheme.onSurface,
-                            disabledLeadingIconColor = appTheme.onSurface,
-                            disabledTrailingIconColor = appTheme.onSurface,
-                        ),
-                )
+            if (useSearch) {
+                Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    val searchInteractionSource = remember { MutableInteractionSource() }
+                    val isSearchFocused by searchInteractionSource.collectIsFocusedAsState()
 
-                if (index != items.lastIndex) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        interactionSource = searchInteractionSource,
+                        textStyle = LocalTextStyle.current.copy(
+                            color = appTheme.onSurface,
+                            fontSize = 12.sp,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        cursorBrush = SolidColor(appTheme.primary),
+                        decorationBox = { innerTextField ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(appTheme.surfaceAlt, RoundedCornerShape(6.dp))
+                                    .border(
+                                        1.dp,
+                                        if (isSearchFocused) appTheme.primary.copy(0.3f) else Color.Transparent,
+                                        RoundedCornerShape(6.dp)
+                                    )
+                                    .height(32.dp)
+                                    .padding(horizontal = 8.dp),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                if (searchQuery.text.isEmpty()) {
+                                    Text("Search...", fontSize = 12.sp, color = appTheme.onSurfaceMuted)
+                                }
+                                innerTextField()
+                            }
+                        },
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (filteredItems.isEmpty()) {
+                    Text(
+                        "No results",
+                        modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                        fontSize = 12.sp,
+                        color = appTheme.onSurfaceMuted
+                    )
+                } else {
+                    filteredItems.forEach { item ->
+                        val isSelected = item == value
+                        DropdownMenuItem(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .height(36.dp)
+                                .background(if (isSelected) appTheme.primary.copy(0.1f) else Color.Transparent),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            text = {
+                                Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                    Text(
+                                        getLabel(item),
+                                        fontSize = 12.sp,
+                                        color = if (isSelected) appTheme.primary else appTheme.onSurface,
+                                    )
+                                    if (isSelected) {
+                                        Icon(Icons.Default.Check, null, Modifier.size(16.dp), appTheme.primary)
+                                    }
+                                }
+                            },
+                            onClick = {
+                                onSelected(item)
+                                showSuggestions = false
+                            }
+                        )
+                    }
                 }
             }
         }

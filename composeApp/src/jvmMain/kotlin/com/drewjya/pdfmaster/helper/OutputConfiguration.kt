@@ -2,15 +2,21 @@ package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
 import com.lowagie.text.FontFactory
-import kotlinx.serialization.Serializable
 import java.util.UUID
+import kotlinx.serialization.Serializable
 
 fun getAvailableFonts(): List<String> {
-    // 1. Scan standard system font directories (Windows, macOS, Linux)
     FontFactory.registerDirectories()
-
-    // 2. Return the names of all discovered fonts
-    return (FontFactory.getRegisteredFonts().toList()).sortedBy { it }
+    return (FontFactory.getRegisteredFonts().filter {
+        val value = it.trim()
+        val isFirstCapital = value.firstOrNull()?.isUpperCase() ?: false
+        if (value.isEmpty()) {
+            false
+        } else {
+            isFirstCapital
+        }
+    }
+        .toList()).sortedBy { it }
 }
 
 @Serializable

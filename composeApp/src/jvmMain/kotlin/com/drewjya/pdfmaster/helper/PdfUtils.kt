@@ -2,6 +2,7 @@ package com.drewjya.pdfmaster.helper
 
 import com.lowagie.text.Document
 import com.lowagie.text.Element
+import com.lowagie.text.FontFactory
 import com.lowagie.text.pdf.BaseFont
 import com.lowagie.text.pdf.PdfCopy
 import com.lowagie.text.pdf.PdfGState
@@ -304,20 +305,33 @@ object PdfUtils {
 
     /** Resolve a BaseFont from an optional family name, falling back to Helvetica. */
     private fun resolveBaseFont(fontName: String): BaseFont {
+
         val name = fontName.trim()
-        return if (name.isNotEmpty()) {
-            runCatching {
+
+        // 1. Handle empty name immediately
+        if (name.isEmpty()) {
+            return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+        }
+
+        return runCatching {
+            // 2. Check FontFactory Registry first (this handles your registered Noto Sans, etc.)
+            if (FontFactory.isRegistered(name)) {
+                val font = FontFactory.getFont(name)
+                font.baseFont ?: BaseFont.createFont(name, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+            } else {
+                // 3. If not registered, try to load as a direct file path or built-in name
                 BaseFont.createFont(name, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
-            }.getOrElse {
-                // Try as a built-in name
-                runCatching {
-                    BaseFont.createFont(name, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
-                }.getOrElse {
-                    BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
-                }
             }
-        } else {
-            BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+        }.getOrElse {
+            println("Failed to load IDENTITY_H for: $name - trying WINANSI")
+
+            runCatching {
+                // 4. Fallback for built-in standard fonts (Helvetica, Times, etc.)
+                BaseFont.createFont(name, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+            }.getOrElse {
+                println("Failed all lookups for: $name - defaulting to Helvetica")
+                BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED)
+            }
         }
     }
 

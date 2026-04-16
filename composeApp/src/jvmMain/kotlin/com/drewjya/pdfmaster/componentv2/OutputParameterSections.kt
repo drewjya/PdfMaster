@@ -65,9 +65,9 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import java.math.BigDecimal
 import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
@@ -78,7 +78,7 @@ fun OutputParameterSections(
 ) {
     val appTheme: AppTheme = koinInject()
     val activeConfig by configViewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
-    val pdfState by pdfViewModel.fonts.collectAsStateWithLifecycle(initialValue = null)
+    val fonts by pdfViewModel.fonts.collectAsStateWithLifecycle(initialValue = null)
     val clip = RoundedCornerShape(8.dp)
 
     Column(
@@ -277,7 +277,7 @@ fun OutputParameterSections(
                         value = identitySettings?.fontName,
                         onSelected = { value -> configViewModel.updateIdentitySettings { it.copy(fontName = value) } },
                         placeholder = "Select font",
-                        items = pdfState?.toList() ?: emptyList(),
+                        items = fonts?.toList() ?: emptyList(),
                         getLabel = { it },
                     )
 
@@ -392,7 +392,7 @@ fun OutputParameterSections(
                             configViewModel.updateNumberingSettings { settings -> settings.copy(fontName = it) }
                         },
                         placeholder = "Select font",
-                        items = pdfState?.toList() ?: emptyList(),
+                        items = fonts?.toList() ?: emptyList(),
                         getLabel = { it },
                     )
 
