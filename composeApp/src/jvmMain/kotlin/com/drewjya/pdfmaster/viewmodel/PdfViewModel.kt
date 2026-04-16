@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.data.AppPreferences
 import com.drewjya.pdfmaster.helper.getAvailableFonts
-import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.io.File
 
 class PdfViewModel(
     private val prefs: AppPreferences,
@@ -21,13 +21,10 @@ class PdfViewModel(
     private val _pdfFiles = MutableStateFlow<List<File>>(emptyList())
     val pdfFiles: StateFlow<List<File>> = _pdfFiles.asStateFlow()
 
-
     fun addFiles(newFiles: List<File>) {
         val onlyPdfs = newFiles.filter { it.extension.equals("pdf", ignoreCase = true) }
-        // Emitting a brand new list reference triggers the StateFlow collector
-        _pdfFiles.value = _pdfFiles.value + onlyPdfs
-
-        println("PDFs: ${_pdfFiles.value.size}")
+        _pdfFiles.value += onlyPdfs
+        _pdfFiles.value = _pdfFiles.value.distinctBy { it.absolutePath }
     }
 
     fun removeFile(file: File) {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -241,6 +242,31 @@ fun VersionButton() {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun IconButton(
+    icon: ImageVector,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    color: Color = Color.Transparent,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(24.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .clickable(enabled = enabled) { onClick() }
+                .background(color.copy(alpha = 0.1f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 

@@ -2,9 +2,8 @@ package com.drewjya.pdfmaster.helper
 
 import androidx.compose.ui.graphics.Color
 import com.lowagie.text.FontFactory
-import java.util.UUID
 import kotlinx.serialization.Serializable
-
+import java.util.UUID
 
 fun getAvailableFonts(): List<String> {
     // 1. Scan standard system font directories (Windows, macOS, Linux)
@@ -83,7 +82,6 @@ data class IdentitySettings(
     val opacity: Float = 0.3f,
     val colorLong: ULong = Color.Black.value,
 ) {
-
     val color: Color
         get() = Color(colorLong)
 }
@@ -97,7 +95,6 @@ data class NumberingSettings(
     val y: Int = 0,
     val colorLong: ULong = Color.Black.value,
 ) {
-
     val color: Color
         get() = Color(colorLong)
 }

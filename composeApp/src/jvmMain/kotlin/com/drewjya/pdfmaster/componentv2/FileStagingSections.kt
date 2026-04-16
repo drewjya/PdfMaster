@@ -1,5 +1,13 @@
 package com.drewjya.pdfmaster.componentv2
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -15,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,6 +34,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -34,10 +43,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,21 +71,20 @@ import kotlin.math.min
 @Composable
 fun FileStagingPane(
     modifier: Modifier = Modifier,
-    pdfViewModel: PdfViewModel = koinViewModel()
+    pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
-
     val appTheme = koinInject<AppTheme>()
     val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
-    // Remember list states to link with scrollbars
     val horizontalState = rememberLazyListState()
     val verticalState = rememberLazyListState()
+    val clip = RoundedCornerShape(8.dp)
     Column(
         modifier =
             modifier
-                .background(appTheme.surfaceAlt.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                .border(1.dp, appTheme.secondary.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                .background(appTheme.surfaceAlt.copy(alpha = 0.5f), clip)
+                .border(1.dp, appTheme.secondary.copy(alpha = 0.2f), clip),
     ) {
         if (files.isEmpty()) {
             EmptyStateView(
@@ -102,92 +114,7 @@ fun FileStagingPane(
                     ) {
                         itemsIndexed(visibleFiles) { index, file ->
                             val actualIndex = startIdx + index + 1
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .clip(
-                                            RoundedCornerShape(12.dp),
-                                        ).size(140.dp)
-                                        .border(
-                                            1.dp,
-                                            appTheme.onSurfaceMuted.copy(alpha = 0.2f),
-                                            RoundedCornerShape(12.dp),
-                                        ).background(
-                                            Color.White,
-                                        ).padding(all = 8.dp),
-                                verticalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    Box(
-                                        modifier =
-                                            Modifier.size(24.dp).background(
-                                                appTheme.secondary.copy(
-                                                    alpha = 0.1f,
-                                                ),
-                                                RoundedCornerShape(4.dp),
-                                            ),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Text(
-                                            text = actualIndex.toString().padStart(2, '0'),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = appTheme.onSurfaceMuted,
-                                        )
-                                    }
-
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .size(24.dp)
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .clickable {
-                                                    pdfViewModel.removeFile(file)
-                                                }.background(
-                                                    appTheme.secondary.copy(alpha = 0.1f),
-                                                ),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            com.drewjya.pdfmaster.design.Icons.Trash,
-                                            contentDescription = null,
-                                            tint = appTheme.error,
-                                            modifier = Modifier.size(16.dp),
-                                        )
-                                    }
-                                }
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        com.drewjya.pdfmaster.design.Icons.Pdf,
-                                        contentDescription = null,
-                                        tint = appTheme.primary,
-                                        modifier = Modifier.size(32.dp),
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = file.name,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = appTheme.onSurface,
-                                        maxLines = 1,
-                                        lineHeight = 12.sp,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        formatBytes(file.length()),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = appTheme.onSurfaceMuted.copy(alpha = 0.8f),
-                                    )
-                                }
-                            }
+                            FileItem(index = actualIndex, file = file, totalPages = files.size)
                         }
                     }
                     HorizontalScrollbar(
@@ -208,7 +135,7 @@ fun FileStagingPane(
                     ) {
                         itemsIndexed(visibleFiles) { index, file ->
                             val actualIndex = startIdx + index + 1
-                            FileRailItem(actualIndex, file)
+                            FileItem(index = actualIndex, file = file, totalPages = files.size)
                         }
                     }
 
@@ -265,58 +192,198 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun FileRailItem(
+fun FileItem(
+    pdfViewModel: PdfViewModel = koinViewModel(),
     index: Int,
+    totalPages: Int = 1,
     file: File,
 ) {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val isCompact = windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT
     val appTheme = koinInject<AppTheme>()
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(appTheme.surface, RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = index.toString().padStart(2, '0'),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = appTheme.onSurfaceMuted,
-            modifier = Modifier.width(32.dp),
+    var isHovered by remember { mutableStateOf(false) }
+
+    val tintColor by animateColorAsState(
+        targetValue = if (isHovered) appTheme.primary.copy(
+            alpha = 0.7f
+        ) else appTheme.onSurfaceMuted,
+        label = "TintColorAnimation"
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isHovered) appTheme.primary.copy(
+            alpha = 0.7f
+        ) else appTheme.onSurfaceMuted.copy(alpha = 0.2f),
+        label = "BorderColorAnimation"
+    )
+    val weight by animateFloatAsState(
+        targetValue = if (isHovered) 650f else 400f,
+        label = "WeightAnimation",
+
         )
 
-        Icon(
-            com.drewjya.pdfmaster.design.Icons.Pdf,
-            contentDescription = null,
-            tint = appTheme.onSurfaceMuted,
-        )
+    val clip = RoundedCornerShape(8.dp)
 
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                file.name,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = appTheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                formatBytes(file.length()),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = appTheme.onSurfaceMuted.copy(alpha = 0.8f),
-            )
+    @Composable
+    fun actions() {
+        AnimatedVisibility(
+            visible = isHovered,
+            // Enter transition: Fade in + Expand horizontally
+            enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(),
+            // Exit transition: Fade out + Shrink horizontally
+            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally()
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { pdfViewModel.moveFile(file, isUp = true) },
+                    color = if (index > 1) appTheme.onSurface else appTheme.onSurfaceMuted,
+                    enabled = index > 1,
+                    icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                )
+                IconButton(
+                    onClick = { pdfViewModel.removeFile(file) },
+                    color = appTheme.error,
+                    icon = com.drewjya.pdfmaster.design.Icons.Trash,
+                )
+                IconButton(
+                    onClick = { pdfViewModel.moveFile(file, isUp = false) },
+                    color = if (index < (totalPages)) appTheme.onSurface else appTheme.onSurfaceMuted,
+                    enabled = index < (totalPages),
+                    icon = Icons.AutoMirrored.Outlined.ArrowForward,
+                )
+            }
         }
-//        IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-//            Icon(
-//                OldIcon.Default.Delete,
-//                contentDescription = "Remove",
-//                tint = appTheme.error,
-//                modifier = Modifier.size(16.dp)
-//            )
-//        }
+    }
+
+    if (isCompact) {
+        Column(
+            modifier =
+                Modifier
+                    .clip(clip)
+                    .size(140.dp)
+                    .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+                    .onPointerEvent(PointerEventType.Exit) { isHovered = false }
+                    .border(1.5.dp, borderColor, clip)
+                    .background(Color.White)
+                    .padding(all = 8.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .background(appTheme.secondary.copy(alpha = 0.1f), clip),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = index.toString().padStart(2, '0'),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight(weight.toInt()),
+                        color = appTheme.onSurfaceMuted,
+                    )
+                }
+
+                actions()
+            }
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    com.drewjya.pdfmaster.design.Icons.Pdf,
+                    contentDescription = null,
+                    tint = tintColor,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+            Column {
+                Text(
+                    text = file.name,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight(weight.toInt()),
+                    color = tintColor,
+                    maxLines = 1,
+                    lineHeight = 12.sp,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    formatBytes(file.length()),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = appTheme.onSurfaceMuted.copy(alpha = 0.8f),
+                )
+            }
+
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onPointerEvent(PointerEventType.Enter) { isHovered = true }
+                .onPointerEvent(PointerEventType.Exit) { isHovered = false }
+                .clip(clip)
+                .background(appTheme.surface, clip)
+
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(clip)
+                    .border(1.5.dp, borderColor, clip)
+                    .padding(12.dp),
+//                .blur(blurRadius)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = index.toString().padStart(2, '0'),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight(weight.toInt()),
+                        color = tintColor,
+                    )
+                }
+
+                Icon(
+                    com.drewjya.pdfmaster.design.Icons.Pdf,
+                    contentDescription = null,
+                    tint = tintColor,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        file.name,
+                        fontSize = 13.sp,
+                        lineHeight = 15.sp,
+                        fontWeight = FontWeight(weight.toInt()),
+                        color = appTheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        formatBytes(file.length()),
+                        fontSize = 10.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = appTheme.onSurfaceMuted.copy(alpha = 0.8f),
+                    )
+                }
+
+                actions()
+            }
+        }
+
+
     }
 }
 

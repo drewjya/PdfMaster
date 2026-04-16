@@ -1,6 +1,5 @@
 package com.drewjya.pdfmaster.helper
 
-
 import com.lowagie.text.Document
 import com.lowagie.text.Element
 import com.lowagie.text.pdf.BaseFont
@@ -13,14 +12,15 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
-
 object PdfUtils {
-
-// ──────────────────────────────────────────────
+    // ──────────────────────────────────────────────
 // Entry point
 // ──────────────────────────────────────────────
 
-    fun processFiles(files: List<File>, configuration: OutputConfiguration) {
+    fun processFiles(
+        files: List<File>,
+        configuration: OutputConfiguration,
+    ) {
         require(files.isNotEmpty()) { "File list must not be empty" }
 
         val outputDir = File(configuration.targetDirectory).also { it.mkdirs() }
@@ -29,15 +29,17 @@ object PdfUtils {
             ProcessMode.Merge -> {
                 val mergedBytes = mergeFiles(files)
                 val enhanced = applyEnhancements(mergedBytes, configuration, totalPages = countPages(mergedBytes))
-                val outName = configuration.mergeSettings.mergeName
-                    .ifBlank { configuration.name }
-                    .ensurePdfExtension()
+                val outName =
+                    configuration.mergeSettings.mergeName
+                        .ifBlank { configuration.name }
+                        .ensurePdfExtension()
                 File(outputDir, outName).writeBytes(enhanced)
             }
 
             ProcessMode.Batch -> {
-                val date = SimpleDateFormat(configuration.batchSettings.dateFormat.pattern)
-                    .format(Date(configuration.batchSettings.selectedDate))
+                val date =
+                    SimpleDateFormat(configuration.batchSettings.dateFormat.pattern)
+                        .format(Date(configuration.batchSettings.selectedDate))
 
                 files.forEach { file ->
                     val bytes = file.readBytes()
@@ -105,7 +107,10 @@ object PdfUtils {
 // Identity / Watermark
 // ──────────────────────────────────────────────
 
-    private fun applyIdentityWatermark(pdfBytes: ByteArray, settings: IdentitySettings): ByteArray {
+    private fun applyIdentityWatermark(
+        pdfBytes: ByteArray,
+        settings: IdentitySettings,
+    ): ByteArray {
         val reader = PdfReader(pdfBytes)
         val out = ByteArrayOutputStream()
         val stamper = PdfStamper(reader, out)
@@ -120,10 +125,11 @@ object PdfUtils {
             content.saveState()
 
             // Transparency
-            val gState = PdfGState().apply {
-                setFillOpacity(settings.opacity)
-                setStrokeOpacity(settings.opacity)
-            }
+            val gState =
+                PdfGState().apply {
+                    setFillOpacity(settings.opacity)
+                    setStrokeOpacity(settings.opacity)
+                }
             content.setGState(gState)
 
             content.setColorFill(javaColor)
@@ -134,13 +140,14 @@ object PdfUtils {
             val textWidth = baseFont.getWidthPoint(settings.text, settings.fontSize.toFloat())
             val textHeight = settings.fontSize.toFloat()
 
-            val (cx, cy) = resolvePosition(
-                position = settings.position,
-                pageWidth = pageSize.width,
-                pageHeight = pageSize.height,
-                itemWidth = textWidth,
-                itemHeight = textHeight,
-            )
+            val (cx, cy) =
+                resolvePosition(
+                    position = settings.position,
+                    pageWidth = pageSize.width,
+                    pageHeight = pageSize.height,
+                    itemWidth = textWidth,
+                    itemHeight = textHeight,
+                )
 
             content.showTextAligned(
                 Element.ALIGN_CENTER,
@@ -179,25 +186,24 @@ object PdfUtils {
             val pageSize = reader.getPageSizeWithRotation(pageIndex)
             val content = stamper.getOverContent(pageIndex)
 
-            val label = settings.format.value
-                .replace("{page}", pageIndex.toString())
-                .replace("{total}", totalPages.toString())
+            val label =
+                settings.format.value
+                    .replace("{page}", pageIndex.toString())
+                    .replace("{total}", totalPages.toString())
 
             content.saveState()
             content.setColorFill(javaColor)
             content.beginText()
             content.setFontAndSize(baseFont, settings.fontSize.toFloat())
-
-            val textWidth = baseFont.getWidthPoint(label, settings.fontSize.toFloat())
             val textHeight = settings.fontSize.toFloat()
-            val (finalX, finalY, align) = resolveNumberingPosition(
-                x = settings.x,
-                y = settings.y,
-                pageWidth = pageSize.width,
-                pageHeight = pageSize.height,
-                textWidth = textWidth,
-                textHeight = textHeight,
-            )
+            val (finalX, finalY, align) =
+                resolveNumberingPosition(
+                    x = settings.x,
+                    y = settings.y,
+                    pageWidth = pageSize.width,
+                    pageHeight = pageSize.height,
+                    textHeight = textHeight,
+                )
 
             content.showTextAligned(align, label, finalX, finalY, 0f)
             content.endText()
@@ -233,31 +239,43 @@ object PdfUtils {
      * Returns Triple(anchorX, anchorY, PdfContentByte alignment constant)
      * so that showTextAligned() places the text correctly without manual width math.
      */
-    private data class NumberingPlacement(val x: Float, val y: Float, val align: Int)
+    private data class NumberingPlacement(
+        val x: Float,
+        val y: Float,
+        val align: Int,
+    )
 
     private fun resolveNumberingPosition(
         x: Int,
         y: Int,
         pageWidth: Float,
         pageHeight: Float,
-        textWidth: Float,
         textHeight: Float,
         edgeMargin: Float = 20f,
     ): NumberingPlacement {
         // ── Horizontal ────────────────────────────────────────────
         // showTextAligned uses an anchor point + alignment, so no manual width offset needed.
-        val (anchorX, align) = when {
-            x == 0 -> pageWidth / 2f to Element.ALIGN_CENTER
-            x > 0 -> pageWidth - x.toFloat() to Element.ALIGN_RIGHT  // right-anchored, inset by x
-            else -> (-x).toFloat() to Element.ALIGN_LEFT   // left-anchored,  inset by |x|
-        }
+        val (anchorX, align) =
+            when {
+                x == 0 -> pageWidth / 2f to Element.ALIGN_CENTER
+
+                x > 0 -> pageWidth - x.toFloat() to Element.ALIGN_RIGHT
+
+                // right-anchored, inset by x
+                else -> (-x).toFloat() to Element.ALIGN_LEFT // left-anchored,  inset by |x|
+            }
 
         // ── Vertical ─────────────────────────────────────────────
-        val anchorY = when {
-            y == 0 -> edgeMargin                                      // auto bottom
-            y > 0 -> pageHeight - y.toFloat() - textHeight           // top side, inset by y
-            else -> (-y).toFloat()                                  // bottom side, inset by |y|
-        }
+        val anchorY =
+            when {
+                y == 0 -> edgeMargin
+
+                // auto bottom
+                y > 0 -> pageHeight - y.toFloat() - textHeight
+
+                // top side, inset by y
+                else -> (-y).toFloat() // bottom side, inset by |y|
+            }
 
         return NumberingPlacement(anchorX, anchorY, align)
     }
@@ -273,15 +291,16 @@ object PdfUtils {
         itemWidth: Float,
         itemHeight: Float,
         margin: Float = 20f,
-    ): Pair<Float, Float> = when (position) {
-        Position.Center -> pageWidth / 2f to pageHeight / 2f
-        Position.Top -> pageWidth / 2f to pageHeight - margin - itemHeight / 2f
-        Position.Bottom -> pageWidth / 2f to margin + itemHeight / 2f
-        Position.TopLeft -> margin + itemWidth / 2f to pageHeight - margin - itemHeight / 2f
-        Position.TopRight -> pageWidth - margin - itemWidth / 2f to pageHeight - margin - itemHeight / 2f
-        Position.BottomLeft -> margin + itemWidth / 2f to margin + itemHeight / 2f
-        Position.BottomRight -> pageWidth - margin - itemWidth / 2f to margin + itemHeight / 2f
-    }
+    ): Pair<Float, Float> =
+        when (position) {
+            Position.Center -> pageWidth / 2f to pageHeight / 2f
+            Position.Top -> pageWidth / 2f to pageHeight - margin - itemHeight / 2f
+            Position.Bottom -> pageWidth / 2f to margin + itemHeight / 2f
+            Position.TopLeft -> margin + itemWidth / 2f to pageHeight - margin - itemHeight / 2f
+            Position.TopRight -> pageWidth - margin - itemWidth / 2f to pageHeight - margin - itemHeight / 2f
+            Position.BottomLeft -> margin + itemWidth / 2f to margin + itemHeight / 2f
+            Position.BottomRight -> pageWidth - margin - itemWidth / 2f to margin + itemHeight / 2f
+        }
 
     /** Resolve a BaseFont from an optional family name, falling back to Helvetica. */
     private fun resolveBaseFont(fontName: String): BaseFont {
@@ -302,8 +321,7 @@ object PdfUtils {
         }
     }
 
-    private fun String.ensurePdfExtension(): String =
-        if (endsWith(".pdf", ignoreCase = true)) this else "$this.pdf"
+    private fun String.ensurePdfExtension(): String = if (endsWith(".pdf", ignoreCase = true)) this else "$this.pdf"
 
     /** Convert Compose Color → java.awt.Color */
     private fun androidx.compose.ui.graphics.Color.toJavaColor(): java.awt.Color =

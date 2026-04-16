@@ -51,7 +51,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.drewjya.pdfmaster.components.ColorPicker
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.DatePattern
@@ -59,15 +58,16 @@ import com.drewjya.pdfmaster.helper.EnhancementType
 import com.drewjya.pdfmaster.helper.PageFormat
 import com.drewjya.pdfmaster.helper.Position
 import com.drewjya.pdfmaster.helper.ProcessMode
+import com.drewjya.pdfmaster.hooks.rememberAppInput
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import java.math.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import java.math.BigDecimal
 import androidx.compose.material.icons.Icons as OldIcon
 
 @Composable
@@ -140,6 +140,11 @@ fun OutputParameterSections(
         CardWrapper { expanded, onExpand ->
             val active = activeConfig?.mode == ProcessMode.Merge
             val mergeSettings = activeConfig?.mergeSettings
+            val (name, setName) =
+                rememberAppInput(
+                    externalValue = mergeSettings?.mergeName,
+                    onValueChange = { newValue -> configViewModel.updateMergeSettings { it.copy(mergeName = newValue) } },
+                )
             CardTitle(
                 title = "Merge",
                 icon = Icons.Merge,
@@ -170,13 +175,11 @@ fun OutputParameterSections(
                 InputIcon(
                     enabled = active,
                     label = "MERGE NAME",
-                    onValueChange = { value ->
-                        configViewModel.updateMergeSettings { it.copy(mergeName = value) }
-                    },
+                    onValueChange = setName,
                     onIconClick = {
                         pickerFile.launch()
                     },
-                    text = mergeSettings?.mergeName ?: "",
+                    value = name,
                     icon = Icons.FileAdd,
                 )
             }
@@ -186,6 +189,59 @@ fun OutputParameterSections(
             val active = activeConfig?.activeEnhancements?.contains(EnhancementType.Identity) ?: false
             val identitySettings = activeConfig?.identitySettings
             val controller = rememberColorPickerController()
+            val (watermark, setWatermark) =
+                rememberAppInput(
+                    externalValue = identitySettings?.text,
+                    onValueChange = { newValue -> configViewModel.updateIdentitySettings { it.copy(text = newValue) } },
+                )
+            val (opacity, setOpacity) =
+                rememberAppInput(
+                    externalValue = identitySettings?.opacity?.run { (this * 100).toInt() }?.toString() ?: "0",
+                    onValueChange = { str ->
+                        val value = str.toBigDecimalOrNull()
+                        println(str)
+                        if (value != null) {
+                            val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("100"))
+                            configViewModel.updateIdentitySettings {
+                                it.copy(opacity = clamped.toFloat() / 100f) // ← fix here
+                            }
+                        } else {
+                            if (str.trim().isBlank()) {
+                                configViewModel.updateIdentitySettings { it.copy(opacity = 0f) }
+                            }
+                        }
+                    },
+                )
+
+            val (rotation, setRotation) =
+                rememberAppInput(
+                    externalValue = identitySettings?.rotation?.toString(),
+                    onValueChange = {
+                        val value = it.toBigDecimalOrNull()
+
+                        if (value != null) {
+                            val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("360"))
+                            configViewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
+                        } else if (it.trim().isBlank()) {
+                            configViewModel.updateIdentitySettings { it.copy(rotation = 0) }
+                        }
+                    },
+                )
+
+            val (fontSize, setFontSize) =
+                rememberAppInput(
+                    externalValue = identitySettings?.fontSize?.toString(),
+                    onValueChange = {
+                        val value = it.toBigDecimalOrNull()
+
+                        if (value != null) {
+                            val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
+                            configViewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
+                        } else if (it.trim().isBlank()) {
+                            configViewModel.updateIdentitySettings { it.copy(fontSize = 1) }
+                        }
+                    },
+                )
             CardTitle(
                 title = "Identity",
                 icon = Icons.Identity,
@@ -196,8 +252,8 @@ fun OutputParameterSections(
             )
             ConfigWrapper(active = active, expanded = expanded) {
                 Input(
-                    text = identitySettings?.text ?: "",
-                    onValueChange = { value -> configViewModel.updateIdentitySettings { it.copy(text = value) } },
+                    value = watermark,
+                    onValueChange = setWatermark,
                     label = "WATERMARK TEXT",
                     placeholder = "Input watermark",
                     enabled = active,
@@ -229,61 +285,32 @@ fun OutputParameterSections(
                         modifier = Modifier.weight(1f),
                         label = "FONT SIZE",
                         enabled = active,
-                        text = identitySettings?.fontSize?.toString() ?: "1",
-                        onValueChange = {
-                            val value = it.toBigDecimalOrNull()
-
-                            if (value != null) {
-                                val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
-                                configViewModel.updateIdentitySettings { it.copy(fontSize = clamped.toInt()) }
-                            } else if (it.trim().isBlank()) {
-                                configViewModel.updateIdentitySettings { it.copy(fontSize = 1) }
-                            }
-                        },
+                        value = fontSize,
+                        onValueChange = setFontSize,
                     )
 
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "ROTATION",
-                        text = identitySettings?.rotation?.toString() ?: "0",
+                        value = rotation,
                         enabled = active,
-                        onValueChange = {
-                            val value = it.toBigDecimalOrNull()
-
-                            if (value != null) {
-                                val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("360"))
-                                configViewModel.updateIdentitySettings { it.copy(rotation = clamped.toInt()) }
-                            } else if (it.trim().isBlank()) {
-                                configViewModel.updateIdentitySettings { it.copy(rotation = 0) }
-                            }
-                        },
+                        onValueChange = setRotation,
                     )
 
-                    ColorPicker(controller = controller, modifier = Modifier.weight(1f))
+                    ColorPicker(
+                        controller = controller,
+                        modifier = Modifier.weight(1f),
+                        color = identitySettings?.color ?: Color.Black,
+                        onChanged = { color ->
+                            configViewModel.updateIdentitySettings { it.copy(colorLong = color.value) }
+                        },
+                    )
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "OPACITY",
-                        text =
-                            identitySettings
-                                ?.opacity
-                                ?.run {
-                                    (this * 100).toInt()
-                                }?.toString() ?: "0",
+                        value = opacity,
                         enabled = active,
-                        onValueChange = { str ->
-                            val value = str.toBigDecimalOrNull()
-                            println(str)
-                            if (value != null) {
-                                val clamped = value.coerceIn(BigDecimal("0"), BigDecimal("100"))
-                                configViewModel.updateIdentitySettings {
-                                    it.copy(opacity = clamped.toFloat() / 100f) // ← fix here
-                                }
-                            } else {
-                                if (str.trim().isBlank()) {
-                                    configViewModel.updateIdentitySettings { it.copy(opacity = 0f) }
-                                }
-                            }
-                        },
+                        onValueChange = setOpacity,
                         placeholder = "Input opacity",
                     )
                 }
@@ -294,6 +321,46 @@ fun OutputParameterSections(
             val numberingSettings = activeConfig?.numberingSettings
             val controller = rememberColorPickerController()
 
+            val (fontSize, setFontSize) =
+                rememberAppInput(
+                    externalValue = numberingSettings?.fontSize?.toString(),
+                    onValueChange = {
+                        val value = it.toBigDecimalOrNull()
+
+                        if (value != null) {
+                            val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
+                            configViewModel.updateNumberingSettings { it.copy(fontSize = clamped.toInt()) }
+                        } else if (it.trim().isBlank()) {
+                            configViewModel.updateNumberingSettings { it.copy(fontSize = 1) }
+                        }
+                    },
+                )
+
+            val (x, setX) =
+                rememberAppInput(
+                    externalValue = numberingSettings?.x?.toString() ?: "0",
+                    onValueChange = {
+                        val value = it.toBigDecimalOrNull()
+                        if (value != null) {
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(x = value.toInt()) }
+                        } else if (it.trim().isBlank()) {
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(x = 0) }
+                        }
+                    },
+                )
+
+            val (y, setY) =
+                rememberAppInput(
+                    externalValue = numberingSettings?.y?.toString() ?: "0",
+                    onValueChange = {
+                        val value = it.toBigDecimalOrNull()
+                        if (value != null) {
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(y = value.toInt()) }
+                        } else if (it.trim().isBlank()) {
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(y = 0) }
+                        }
+                    },
+                )
             CardTitle(
                 title = "Numbering",
                 icon = Icons.Numbering,
@@ -321,7 +388,6 @@ fun OutputParameterSections(
                         enabled = active,
                         label = "FONT",
                         value = numberingSettings?.fontName,
-
                         onSelected = {
                             configViewModel.updateNumberingSettings { settings -> settings.copy(fontName = it) }
                         },
@@ -333,17 +399,8 @@ fun OutputParameterSections(
                     Input(
                         modifier = Modifier.weight(1f),
                         label = "FONT SIZE",
-                        text = numberingSettings?.fontSize?.toString() ?: "1",
-                        onValueChange = {
-                            val value = it.toBigDecimalOrNull()
-
-                            if (value != null) {
-                                val clamped = value.coerceIn(BigDecimal("1"), BigDecimal("120"))
-                                configViewModel.updateNumberingSettings { settings -> settings.copy(fontSize = clamped.toInt()) }
-                            } else if (it.trim().isBlank()) {
-                                configViewModel.updateNumberingSettings { settings -> settings.copy(fontSize = 1) }
-                            }
-                        },
+                        value = fontSize,
+                        onValueChange = setFontSize,
                     )
 
                     Row(
@@ -354,31 +411,26 @@ fun OutputParameterSections(
                         Input(
                             modifier = Modifier.weight(1f),
                             label = "X",
-                            text = numberingSettings?.x?.toString() ?: "0",
-                            onValueChange = {
-                                val value = it.toBigDecimalOrNull()
-                                if (value != null) {
-                                    configViewModel.updateNumberingSettings { settings -> settings.copy(x = value.toInt()) }
-                                } else if (it.trim().isBlank()) {
-                                    configViewModel.updateNumberingSettings { settings -> settings.copy(x = 0) }
-                                }
-                            },
+                            value = x,
+                            onValueChange = setX,
                         )
                         Input(
                             modifier = Modifier.weight(1f),
                             label = "Y",
-                            text = numberingSettings?.y?.toString() ?: "0",
-                            onValueChange = {
-                                val value = it.toBigDecimalOrNull()
-                                if (value != null) {
-                                    configViewModel.updateNumberingSettings { settings -> settings.copy(y = value.toInt()) }
-                                } else if (it.trim().isBlank()) {
-                                    configViewModel.updateNumberingSettings { settings -> settings.copy(y = 0) }
-                                }
-                            },
+                            value = y,
+                            onValueChange = setY,
                         )
                     }
-                    ColorPicker(controller = controller, modifier = Modifier.weight(1f))
+                    ColorPicker(
+                        controller = controller,
+                        modifier = Modifier.weight(1f),
+                        color = numberingSettings?.color ?: Color.Black,
+                        onChanged = { color ->
+                            configViewModel.updateNumberingSettings { settings -> settings.copy(colorLong = color.value) }
+                        },
+                    )
+
+                    Box(modifier = Modifier.weight(1f)) {}
                 }
             }
         }

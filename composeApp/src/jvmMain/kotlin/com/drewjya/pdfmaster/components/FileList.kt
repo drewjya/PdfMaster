@@ -43,12 +43,11 @@ import com.drewjya.pdfmaster.design.Slate400
 import com.drewjya.pdfmaster.design.Slate500
 import com.drewjya.pdfmaster.design.Slate700
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
-import java.io.File
 import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
 
 @Composable
 fun FileList(pdfViewModel: PdfViewModel = koinViewModel()) {
-
     val files = pdfViewModel.pdfFiles.collectAsState()
     Column(
         modifier =

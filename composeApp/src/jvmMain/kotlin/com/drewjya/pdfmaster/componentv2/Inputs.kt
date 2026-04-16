@@ -21,12 +21,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -37,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuItemColors
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -56,11 +59,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.helper.DatePattern
 import com.drewjya.pdfmaster.helper.formatDate
+import com.github.skydoves.colorpicker.compose.BrightnessSlider
+import com.github.skydoves.colorpicker.compose.ColorPickerController
+import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import org.koin.compose.koinInject
 
 @Composable
@@ -86,9 +95,9 @@ fun Input(
     modifier: Modifier = Modifier,
     label: String = "",
     enabled: Boolean = true,
-    text: String = "",
+    value: TextFieldValue = TextFieldValue(""), // Correct: Using TextFieldValue
     placeholder: String = "",
-    onValueChange: (String) -> Unit = {},
+    onValueChange: (TextFieldValue) -> Unit = {}, // Correct: Passing back the full value
     components: @Composable () -> Unit = {},
 ) {
     val appTheme = koinInject<AppTheme>()
@@ -104,7 +113,7 @@ fun Input(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             BasicTextField(
-                value = text,
+                value = value,
                 enabled = enabled,
                 onValueChange = onValueChange,
                 interactionSource = interactionSource,
@@ -134,7 +143,8 @@ fun Input(
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
-                        if (text.isEmpty()) {
+                        // Use value.text to check if empty
+                        if (value.text.isEmpty()) {
                             Text(
                                 text = placeholder,
                                 fontWeight = FontWeight.Light,
@@ -156,10 +166,10 @@ fun Input(
 fun InputIcon(
     modifier: Modifier = Modifier,
     label: String = "",
-    text: String = "",
+    value: TextFieldValue = TextFieldValue(""),
     enabled: Boolean = true,
     icon: ImageVector,
-    onValueChange: (String) -> Unit = {},
+    onValueChange: (TextFieldValue) -> Unit = {},
     onIconClick: () -> Unit = {},
 ) {
     val appTheme = koinInject<AppTheme>()
@@ -167,7 +177,7 @@ fun InputIcon(
         enabled = enabled,
         modifier = modifier,
         label = label,
-        text = text,
+        value = value,
         onValueChange = onValueChange,
     ) {
         AppIcon(
@@ -392,6 +402,111 @@ fun <T> DropdownPicker(
 
                 if (index != items.lastIndex) {
                     Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ColorPicker(
+    modifier: Modifier = Modifier,
+    controller: ColorPickerController,
+    color: Color? = null,
+    onChanged: (Color) -> Unit = {},
+) {
+    LaunchedEffect(Unit) {
+        if (color != null) {
+            println("Setting color to $color")
+            controller.selectByColor(color, true)
+        }
+    }
+
+    InputWrapper(modifier = modifier, label = "COLOR") {
+        ColorPickerPopup(
+            controller = controller,
+            color = color ?: Color.Black,
+            onColorSelected = onChanged,
+        )
+    }
+}
+
+@Composable
+private fun ColorPickerPopup(
+    controller: ColorPickerController,
+    color: Color = Color.Black,
+    onColorSelected: (Color) -> Unit = {},
+    appTheme: AppTheme = koinInject(),
+) {
+    var showPopup by remember { mutableStateOf(false) }
+    val onDismissRequest: () -> Unit = {
+        showPopup = false
+    }
+    val templateColors = listOf(Color.Black, Color.Blue, Color.Yellow, Color.Red, Color.Green)
+
+    val clip = RoundedCornerShape(4.dp)
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth(1f)
+                .height(32.dp)
+                .clip(clip)
+                .border(0.5.dp, appTheme.onSurfaceMuted, clip)
+                .padding(4.dp)
+                .clickable { showPopup = true }
+                .background(color, clip),
+    )
+
+    if (showPopup) {
+        Popup(
+            alignment = Alignment.Center,
+            onDismissRequest = onDismissRequest,
+            // focusable = true is REQUIRED for sliders to work and outside-clicks to dismiss
+            properties = PopupProperties(focusable = true, dismissOnClickOutside = true),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                shadowElevation = 8.dp, // Added shadow to make it pop off the background
+                modifier = Modifier.width(240.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
+//                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HsvColorPicker(
+                        initialColor = color,
+                        onColorChanged = { onColorSelected(it.color) },
+                        modifier = Modifier.fillMaxWidth().height(250.dp),
+                        controller = controller,
+                    )
+                    BrightnessSlider(
+                        modifier = Modifier.fillMaxWidth().height(15.dp),
+                        controller = controller,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        templateColors.forEach { color ->
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .clickable {
+                                            controller.selectByColor(color, true)
+                                        },
+                            )
+                        }
+                    }
+                    Button(onClick = {
+                        onDismissRequest()
+                    }) {
+                        Text("Back")
+                    }
                 }
             }
         }

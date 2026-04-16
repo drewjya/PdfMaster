@@ -23,7 +23,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun Navbar(pdfViewModel: PdfViewModel = koinViewModel()) {
     val appTheme: AppTheme = koinInject()
-    
+
     val pickerFiles =
         rememberFilePickerLauncher(
             type = FileKitType.File(extensions = setOf("pdf")),

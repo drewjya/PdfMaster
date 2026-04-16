@@ -31,12 +31,12 @@ val appModule =
                 currentVersion = "1.1.7",
                 assetMatcher = { name ->
                     name.endsWith(".msi") ||
-                            name.endsWith(".exe") ||
-                            name.endsWith(".dmg") ||
-                            name.endsWith(".AppImage") ||
-                            name.endsWith(".deb") ||
-                            name.endsWith(".rpm") ||
-                            name.endsWith(".jar")
+                        name.endsWith(".exe") ||
+                        name.endsWith(".dmg") ||
+                        name.endsWith(".AppImage") ||
+                        name.endsWith(".deb") ||
+                        name.endsWith(".rpm") ||
+                        name.endsWith(".jar")
                 },
                 downloader = DesktopAssetDownloader(),
                 installer = DesktopAssetInstaller(),

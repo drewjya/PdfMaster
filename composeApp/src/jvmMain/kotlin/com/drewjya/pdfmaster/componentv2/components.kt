@@ -32,6 +32,7 @@ import com.drewjya.pdfmaster.components.SnackbarMessage
 import com.drewjya.pdfmaster.design.AppTheme
 import com.drewjya.pdfmaster.design.Icons
 import com.drewjya.pdfmaster.helper.PdfUtils
+import com.drewjya.pdfmaster.hooks.rememberAppInput
 import com.drewjya.pdfmaster.viewmodel.ConfigViewModel
 import com.drewjya.pdfmaster.viewmodel.PdfViewModel
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -73,12 +74,17 @@ fun App() {
 @Composable
 fun DockedFooter(
     viewModel: ConfigViewModel = koinViewModel(),
-    pdfViewModel: PdfViewModel = koinViewModel()
+    pdfViewModel: PdfViewModel = koinViewModel(),
 ) {
     val appTheme: AppTheme = koinInject()
-
     val activeConfig by viewModel.activeConfig.collectAsStateWithLifecycle(initialValue = null)
     val files by pdfViewModel.pdfFiles.collectAsStateWithLifecycle(emptyList())
+
+    val (targetDir, setTargetDir) =
+        rememberAppInput(
+            externalValue = activeConfig?.targetDirectory,
+            onValueChange = { newValue -> viewModel.updateBasicInfo(targetDir = newValue) },
+        )
 
     val pickerDirectory =
         rememberDirectoryPickerLauncher(
@@ -86,9 +92,7 @@ fun DockedFooter(
                 if (directory != null) {
                     val selectedFolder = directory.file
                     if (selectedFolder.canWrite()) {
-                        viewModel.updateBasicInfo(
-                            targetDir = directory.path,
-                        )
+                        viewModel.updateBasicInfo(targetDir = directory.path)
                     } else {
                         pdfViewModel.snackbarMessage.value =
                             SnackbarMessage(
@@ -113,21 +117,22 @@ fun DockedFooter(
         verticalAlignment = Alignment.Bottom,
     ) {
         Box(modifier = Modifier.weight(1f)) {
+            // 3. Use Input instead of InputIcon if you modified Input to use TextFieldValue
+            // Or ensure your InputIcon was also updated to accept TextFieldValue
             InputIcon(
                 label = "TARGET DIRECTORY",
-                onIconClick = pickerDirectory::launch,
-                onValueChange = {
-                    viewModel.updateBasicInfo(
-                        targetDir = it,
-                    )
-                },
-                text = activeConfig?.targetDirectory ?: "",
                 icon = Icons.FolderOutput,
+                onIconClick = pickerDirectory::launch,
+                value = targetDir, // Pass the TextFieldValue
+                onValueChange = setTargetDir,
             )
         }
 
         val fileCount = files.size
-        Box(modifier = Modifier.weight(0.6f).height(height = 32.dp), contentAlignment = Alignment.CenterEnd) {
+        Box(
+            modifier = Modifier.weight(0.6f).height(height = 32.dp),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
             Button(
                 onClick = { PdfUtils.processFiles(files = files, configuration = activeConfig ?: return@Button) },
                 enabled = fileCount > 0,

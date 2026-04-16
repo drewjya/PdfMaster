@@ -5,7 +5,6 @@ import io.github.vinceglb.filekit.utils.toPath
 import io.github.xxfast.kstore.KStore
 import io.github.xxfast.kstore.file.storeOf
 import java.io.File
-import kotlinx.coroutines.flow.Flow
 
 class ConfigManager {
     private val appDir = System.getProperty("user.home") + "/.pdfmaster"
@@ -41,7 +40,7 @@ class ConfigManager {
             default = defaultInitialState,
         )
 
-    val configs: Flow<UserConfigs?> = store.updates
+//    val configs: Flow<UserConfigs?> = store.updates
 
     suspend fun saveConfig(config: OutputConfiguration) {
         store.update { current ->
